@@ -27,17 +27,18 @@ int main (int argc, char* argv[])
     return 1;
   }
   juce::File outFile(argv[3]);
+  outFile.deleteFile();
 
   juce::AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
 
   juce::AudioFormatReader *carrierReader = formatManager.createReaderFor(carrierFile);
-  if (carrierReader == NULL) {
+  if (carrierReader == nullptr) {
     std::cerr << "Could not read carrier file." << std::endl;
     return 1;
   }
   juce::AudioFormatReader *infoReader = formatManager.createReaderFor(infoFile);
-  if (infoReader == NULL) {
+  if (infoReader == nullptr) {
     std::cerr << "Could not read info file." << std::endl;
     return 1;
   }
@@ -81,21 +82,28 @@ int main (int argc, char* argv[])
     }
   }
 
-  juce::FileOutputStream outStream(outFile, outLen * channelCount);
-  if (outStream.failedToOpen()) {
+  // Creating an outStream with the FileOutputStream on the stack creates
+  // a problem because the AudioFormatWriter expects to be able to delete
+  // it when it is destroyed. So, when we delete the writer below, it
+  // will try to delete the outStream, which it cannot!
+  // https://github.com/juce-framework/JUCE/blob/master/modules/juce_audio_formats/format/juce_AudioFormatWriter.cpp#L61
+  //juce::FileOutputStream outStream(outFile, outLen * channelCount);
+  std::unique_ptr<juce::FileOutputStream> outStream = outFile.createOutputStream();
+  if (outStream->failedToOpen()) {
     std::cerr << "Could not open output file." << std::endl;
     return 1;
   }
 
   juce::WavAudioFormat wavFormat;
-  std::cout << "channelCount: " << channelCount << ", outLen: " << outLen << std::endl;
+  std::cout << "channelCount: " << channelCount << ", outLen: " << outLen << ", bitsPerSample: " << bitsPerSample << std::endl;
   juce::AudioFormatWriter *writer = wavFormat.createWriterFor(
-    &outStream, sampleRate, channelCount, bitsPerSample, NULL, 0
+    outStream.get(), sampleRate, channelCount, bitsPerSample, {}, 0
   );
-  if (writer == NULL) {
+  if (writer == nullptr) {
     std::cerr << "Could not write to output file." << std::endl;
     return 1;
   }
+  outStream.release();
   writer->writeFromAudioSampleBuffer(outBuffer, 0, outLen);
 
   delete writer;
