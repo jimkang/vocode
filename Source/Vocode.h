@@ -41,9 +41,13 @@ static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
     fftData[sampleIndex] = samplePtr[sampleIndex];
   }
-  printSamples("fftData, before FFT", fftData, sampleLimit);
+  printSamples("fftData, before anything", fftData, sampleLimit);
 
   dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+  window.multiplyWithWindowingTable(fftData.data(), fftSize);
+
+  printSamples("fftData, after windowing", fftData, sampleLimit);
+
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyForwardTransform(fftData.data());
 
