@@ -7,6 +7,7 @@
 */
 
 #include <JuceHeader.h>
+#include "Vocode.h"
 
 //==============================================================================
 int main (int argc, char* argv[])
@@ -59,7 +60,6 @@ int main (int argc, char* argv[])
   delete infoReader;
   delete carrierReader;
 
-  // Just make some kind of nonsense output out of it for now.
   int outLen = carrierReader->lengthInSamples;
   if (infoReader->lengthInSamples < outLen) {
     outLen = infoReader->lengthInSamples;
@@ -72,16 +72,7 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
-  for (int ch = 0; ch < channelCount; ++ch) {
-    const float *carrierPtr = carrierBuffer.getReadPointer(ch);
-    const float *infoPtr = infoBuffer.getReadPointer(ch);
-    float *outPtr = outBuffer.getWritePointer(ch);
-
-    for (int i = 0; i < outLen; ++i) {
-      outPtr[i] = i % 2 == 0 ? carrierPtr[i] : infoPtr[i];
-    }
-  }
-
+  vocode(carrierBuffer, infoBuffer, outBuffer);
   // Creating an outStream with the FileOutputStream on the stack creates
   // a problem because the AudioFormatWriter expects to be able to delete
   // it when it is destroyed. So, when we delete the writer below, it
