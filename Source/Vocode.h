@@ -8,6 +8,7 @@ typedef std::array<float, fftSize * 2> FFTArray;
 
 static void vocodeChannel(float *carrierPtr, float *infoPtr, const int outLen, float *outPtr);
 static void getFFT(float *samplePtr, int sampleCount, FFTArray& fftData);
+static void printSamples(const char *arrayName, FFTArray& fftData, int arraySize);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -40,8 +41,17 @@ static void getFFT(float *samplePtr, int sampleCount, FFTArray& fftData) {
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
     fftData[sampleIndex] = samplePtr[sampleIndex];
   }
-  std::cout << "fftData sample early: " << fftData[sampleLimit/2] << std::endl;
-  std::cout << "fftData sample late: " << fftData[sampleLimit + sampleLimit/2] << std::endl;
+  printSamples("fftData, before FFT", fftData, sampleLimit);
+
   dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
   dsp::FFT fft(fftPowerOf2);
+  fft.performRealOnlyForwardTransform(fftData.data());
+
+  printSamples("fftData, after FFT", fftData, sampleLimit);
+}
+
+static void printSamples(const char *arrayName, FFTArray& fftData, int arraySize) {
+  std::cout << arrayName << " sample early: " << fftData[arraySize/2] << std::endl;
+  //std::cout << arrayName << " sample late: " << fftData[arraySize + arraySize/2] << std::endl;
+  std::cout << arrayName << " sample late: " << fftData[arraySize + arraySize/2 + 1] << std::endl;
 }
