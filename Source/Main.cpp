@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 #include "Vocode.h"
+#include "Reconstruct.h"
 
 //==============================================================================
 int main (int argc, char* argv[])
@@ -72,7 +73,9 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
-  vocode(carrierBuffer, infoBuffer, outBuffer);
+  reconstruct(carrierBuffer, outBuffer);
+  //vocode(carrierBuffer, infoBuffer, outBuffer);
+
   // Creating an outStream with the FileOutputStream on the stack creates
   // a problem because the AudioFormatWriter expects to be able to delete
   // it when it is destroyed. So, when we delete the writer below, it

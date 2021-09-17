@@ -2,6 +2,8 @@
 #include <math.h>
 #include "Consts.h"
 
+#pragma once
+
 using namespace juce;
 using namespace std;
 
