@@ -1,5 +1,7 @@
 #pragma once
 
+#include <math.h>
+
 const int fftPowerOf2 = 12;
 const int fftSize = 1 << fftPowerOf2;
 
@@ -7,5 +9,6 @@ const int fftSize = 1 << fftPowerOf2;
 // I imagine they were determined via experimentation.
 const float maxCarrierMag = 9.0;
 const float smallifyFactor = 0.065;
+const float tinyNumber = pow(1, -20);
 
 const float overlapAmount = 2.0;
