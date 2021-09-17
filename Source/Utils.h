@@ -18,6 +18,7 @@ static void printRange(const char *arrayName, int lowerBound, int upperBound, fl
 static void getReal(ComplexFFTArray& fftData, FFTArray& realVals);
 static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals);
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData);
+static float reciprocalSqRt(float bin);
 
 // fftData will have real and imaginary parts interleaved.
 static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData) {
@@ -59,7 +60,8 @@ static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes) {
   for (int i = 0; i < fftData.size(); i += 2) {
     const float realSquared = pow(fftData[i], 2);
     const float imagSquared = pow(fftData[i + 1], 2);
-    binMagnitudes[i/2] = sqrt(realSquared + imagSquared);
+    binMagnitudes[i/2] = reciprocalSqRt(sqrt(realSquared + imagSquared));
+
     if (i >= 10 && i < 21) {
       cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << endl;
     }
@@ -98,4 +100,8 @@ static void printRange(const char *arrayName, int lowerBound, int upperBound, fl
     cout << "Value " << i << ": " << array[i] << ", ";
   }
   cout << endl;
+}
+
+static float reciprocalSqRt(float bin) {
+  return 1.0 / sqrt(bin);
 }

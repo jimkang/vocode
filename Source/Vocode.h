@@ -30,7 +30,7 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   //}
 
   // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize/3)) {
+  for (int i = 0; i < outLen; i += floor(fftSize/2)) {
     int end = i + fftSize;
     if (end > outLen) {
       end = outLen;
@@ -62,38 +62,25 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
   getMagnitudes(carrierFFTData, carrierBinMagnitudes);
   getMagnitudes(infoFFTData, infoBinMagnitudes);
 
-  // Get the reciprocal square roots of the magnitudes.
-  const auto reciprocalSqRt = [](float bin){ return 1.0 / sqrt(bin); };
-  FFTArray carrierBinMagnitudeReciprocalSqRts;
-  FFTArray infoBinMagnitudeReciprocalSqRts;
+  // Clamp the carrier magnitudes. to a max value.
+  const auto clamp = [](float val){ return val > maxCarrierMag ? maxCarrierMag : val; };
+  FFTArray carrierBinMagsClamped;
   transform(carrierBinMagnitudes.begin(), carrierBinMagnitudes.end(),
-    carrierBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
-  transform(infoBinMagnitudes.begin(), infoBinMagnitudes.end(),
-    infoBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
-  // The fifth pair in carrierFFTData aligns with the fifth single value
-  // in the magnitude array.
-  printRange("carrierBinMagnitudeReciprocalSqRts", 5, 15, carrierBinMagnitudeReciprocalSqRts.data());
-  printRange("infoBinMagnitudeReciprocalSqRts", 5, 15, infoBinMagnitudeReciprocalSqRts.data());
-
-  // Clamp the carrier rsqrts. to a max value.
-  const auto clamp = [](float val){ return val > maxCarrierRSqrt ? maxCarrierRSqrt : val; };
-  FFTArray carrierBinMagRSqRtsClamped;
-  transform(carrierBinMagnitudeReciprocalSqRts.begin(), carrierBinMagnitudeReciprocalSqRts.end(),
-    carrierBinMagRSqRtsClamped.begin(), clamp);
-  printRange("carrierBinMagRSqRtsClamped", 5, 15, carrierBinMagRSqRtsClamped.data());
+    carrierBinMagsClamped.begin(), clamp);
+  printRange("carrierBinMagsClamped", 5, 15, carrierBinMagsClamped.data());
 
   // Multiply the clamped carrier mag. rsqrts by the info carrier mag. sqrts.
   // Should probably do this in-place for perf. Maybe later.
-  FFTArray combinedBinMagRSqRts;
-  FloatVectorOperations::multiply(combinedBinMagRSqRts.data(),
-    carrierBinMagRSqRtsClamped.data(), infoBinMagnitudeReciprocalSqRts.data(),
+  FFTArray combinedBinMags;
+  FloatVectorOperations::multiply(combinedBinMags.data(),
+    carrierBinMagsClamped.data(), infoBinMagnitudes.data(),
     fftSize);
-  printRange("combinedBinMagRSqRts", 5, 15, combinedBinMagRSqRts.data());
+  printRange("combinedBinMags", 5, 15, combinedBinMags.data());
 
   // Reduce the combined mag. rsqrts.
   FloatVectorOperations::multiply(
-    combinedBinMagRSqRts.data(), smallifyFactor, fftSize);
-  printRange("combinedBinMagRSqRts after reduction", 5, 15, combinedBinMagRSqRts.data());
+    combinedBinMags.data(), smallifyFactor, fftSize);
+  printRange("combinedBinMags after reduction", 5, 15, combinedBinMags.data());
 
   // Combine the imaginary components of the carrier fft
   // with the reduced combined mag. rsqrts.
@@ -101,7 +88,7 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
   getImaginary(carrierFFTData, carrierImagBins);
   FFTArray carrierImagXReducedMagStuff;
   FloatVectorOperations::multiply(carrierImagXReducedMagStuff.data(),
-    carrierImagBins.data(), combinedBinMagRSqRts.data(),
+    carrierImagBins.data(), combinedBinMags.data(),
     fftSize);
 
   // Reduce the real components of the carrier fft.
@@ -112,7 +99,7 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
     carrierRealBins.data(), smallifyFactor, fftSize);
 
   ComplexFFTArray ifftData;
-  getIFFT(carrierReducedRealBins, combinedBinMagRSqRts, ifftData);
+  getIFFT(carrierReducedRealBins, combinedBinMags, ifftData);
 
   // Copy the results to the channel.
   const int sampleLimit = outLen > fftSize ? fftSize : outLen;
