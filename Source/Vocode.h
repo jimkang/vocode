@@ -6,14 +6,22 @@ using namespace std;
 
 const int fftPowerOf2 = 16;
 const int fftSize = 1 << fftPowerOf2;
-typedef array<float, fftSize * 2> FFTArray;
+typedef array<float, fftSize * 2> ComplexFFTArray;
+typedef array<float, fftSize> FFTArray;
+// These come from Miller Puckette's timbre-stamp Pure Data patch.
+// I imagine they were determined via experimentation.
 const float maxCarrierRSqrt = 9.0;
+const float smallifyFactor = 0.00065;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
-static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData);
-static void getMagnitudes(FFTArray& fftData, array<float, fftSize>& binMagnitudes);
+static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData);
+static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData);
+static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes);
 static void printSamples(const char *arrayName, float *array, int arraySize);
 static void printRange(const char *arrayName, int lowerBound, int upperBound, float *array);
+static void getReal(ComplexFFTArray& fftData, FFTArray& realVals);
+static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals);
+static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -36,21 +44,21 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   //}
 
   // Run a real-only FFT on both signals.
-  FFTArray carrierFFTData;
-  FFTArray infoFFTData;
+  ComplexFFTArray carrierFFTData;
+  ComplexFFTArray infoFFTData;
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
 
   // Get the magnitudes of the FFT bins.
-  array<float, fftSize> carrierBinMagnitudes;
-  array<float, fftSize> infoBinMagnitudes;
+  FFTArray carrierBinMagnitudes;
+  FFTArray infoBinMagnitudes;
   getMagnitudes(carrierFFTData, carrierBinMagnitudes);
   getMagnitudes(infoFFTData, infoBinMagnitudes);
 
   // Get the reciprocal square roots of the magnitudes.
   const auto reciprocalSqRt = [](float bin){ return 1.0 / sqrt(bin); };
-  array<float, fftSize> carrierBinMagnitudeReciprocalSqRts;
-  array<float, fftSize> infoBinMagnitudeReciprocalSqRts;
+  FFTArray carrierBinMagnitudeReciprocalSqRts;
+  FFTArray infoBinMagnitudeReciprocalSqRts;
   transform(carrierBinMagnitudes.begin(), carrierBinMagnitudes.end(),
     carrierBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
   transform(infoBinMagnitudes.begin(), infoBinMagnitudes.end(),
@@ -62,22 +70,52 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
 
   // Clamp the carrier rsqrts. to a max value.
   const auto clamp = [](float val){ return val > maxCarrierRSqrt ? maxCarrierRSqrt : val; };
-  array<float, fftSize> carrierBinMagRSqRtsClamped;
+  FFTArray carrierBinMagRSqRtsClamped;
   transform(carrierBinMagnitudeReciprocalSqRts.begin(), carrierBinMagnitudeReciprocalSqRts.end(),
     carrierBinMagRSqRtsClamped.begin(), clamp);
   printRange("carrierBinMagRSqRtsClamped", 5, 15, carrierBinMagRSqRtsClamped.data());
 
   // Multiply the clamped carrier mag. rsqrts by the info carrier mag. sqrts.
   // Should probably do this in-place for perf. Maybe later.
-  array<float, fftSize> combinedBinMagSqRts;
-  FloatVectorOperations::multiply(combinedBinMagSqRts.data(),
+  FFTArray combinedBinMagRSqRts;
+  FloatVectorOperations::multiply(combinedBinMagRSqRts.data(),
     carrierBinMagRSqRtsClamped.data(), infoBinMagnitudeReciprocalSqRts.data(),
     fftSize);
-  printRange("combinedBinMagSqRts", 5, 15, combinedBinMagSqRts.data());
+  printRange("combinedBinMagRSqRts", 5, 15, combinedBinMagRSqRts.data());
+
+  // Reduce the combined mag. rsqrts.
+  FloatVectorOperations::multiply(
+    combinedBinMagRSqRts.data(), smallifyFactor, fftSize);
+  printRange("combinedBinMagRSqRts after reduction", 5, 15, combinedBinMagRSqRts.data());
+
+  // Combine the imaginary components of the carrier fft
+  // with the reduced combined mag. rsqrts.
+  FFTArray carrierImagBins;
+  getImaginary(carrierFFTData, carrierImagBins);
+  FFTArray carrierImagXReducedMagStuff;
+  FloatVectorOperations::multiply(carrierImagXReducedMagStuff.data(),
+    carrierImagBins.data(), combinedBinMagRSqRts.data(),
+    fftSize);
+
+  // Reduce the real components of the carrier fft.
+  FFTArray carrierRealBins;
+  getReal(carrierFFTData, carrierRealBins);
+  FFTArray carrierReducedRealBins;
+  FloatVectorOperations::multiply(
+    carrierRealBins.data(), smallifyFactor, fftSize);
+
+  ComplexFFTArray ifftData;
+  getIFFT(carrierReducedRealBins, combinedBinMagRSqRts, ifftData);
+
+  // Copy the results to the channel.
+  const int sampleLimit = outLen > fftSize ? fftSize : outLen;
+  for (int i = 0; i < sampleLimit; ++i) {
+    outPtr[i] = ifftData[i];
+  }
 }
 
 // fftData will have real and imaginary parts interleaved.
-static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
+static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData) {
   fill(fftData.begin(), fftData.end(), 0.0f);
   const int sampleLimit = sampleCount > fftSize ? fftSize : sampleCount;
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
@@ -93,11 +131,26 @@ static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyForwardTransform(fftData.data());
 
+  // Run the carrier's reduced real FFT bins and
+  // the carrier imaginary bins combined with the
+  // magnitude stuff through the inverse FFT to resynthesize.
   printSamples("fftData, after FFT", fftData.data(), sampleLimit);
 }
 
+static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData) {
+  zipTogetherComplexArray(realBins, imagBins, ifftData);
+  dsp::FFT fft(fftPowerOf2);
+  fft.performRealOnlyInverseTransform(ifftData.data());
+  printSamples("ifftData", ifftData.data(), fftSize);
+
+  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+  window.multiplyWithWindowingTable(ifftData.data(), fftSize);
+
+  printSamples("ifftData, after windowing", ifftData.data(), fftSize);
+}
+
 // Assumes fftData will have real and imaginary parts interleaved.
-static void getMagnitudes(FFTArray& fftData, array<float, fftSize>& binMagnitudes) {
+static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes) {
   for (int i = 0; i < fftData.size(); i += 2) {
     const float realSquared = pow(fftData[i], 2);
     const float imagSquared = pow(fftData[i + 1], 2);
@@ -105,6 +158,26 @@ static void getMagnitudes(FFTArray& fftData, array<float, fftSize>& binMagnitude
     if (i >= 10 && i < 21) {
       cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << endl;
     }
+  }
+}
+
+// Evens are real, odds are imaginary, I hope.
+static void getReal(ComplexFFTArray& fftData, FFTArray& realVals) {
+  for (int i = 0; i < fftSize; ++i) {
+    realVals[i] = fftData[i * 2];
+  }
+}
+
+static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals) {
+  for (int i = 0; i < fftSize; ++i) {
+    imagVals[i] = fftData[i * 2 + 1];
+  }
+}
+
+static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData) {
+  for (int i = 0; i < fftSize; ++i) {
+    fftData[i] = realVals[i * 2];
+    fftData[i] = imagVals[i * 2 + 1];
   }
 }
 
