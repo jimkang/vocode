@@ -30,7 +30,7 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   //}
 
   // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize/2)) {
+  for (int i = 0; i < outLen; i += floor(fftSize/overlapAmount)) {
     int end = i + fftSize;
     if (end > outLen) {
       end = outLen;
@@ -69,7 +69,7 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
     carrierBinMagsClamped.begin(), clamp);
   printRange("carrierBinMagsClamped", 5, 15, carrierBinMagsClamped.data());
 
-  // Multiply the clamped carrier mag. rsqrts by the info carrier mag. sqrts.
+  // Multiply the clamped carrier mags by the info carrier mags.
   // Should probably do this in-place for perf. Maybe later.
   FFTArray combinedBinMags;
   FloatVectorOperations::multiply(combinedBinMags.data(),
@@ -77,13 +77,13 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
     fftSize);
   printRange("combinedBinMags", 5, 15, combinedBinMags.data());
 
-  // Reduce the combined mag. rsqrts.
+  // Reduce the combined mags.
   FloatVectorOperations::multiply(
     combinedBinMags.data(), smallifyFactor, fftSize);
   printRange("combinedBinMags after reduction", 5, 15, combinedBinMags.data());
 
   // Combine the imaginary components of the carrier fft
-  // with the reduced combined mag. rsqrts.
+  // with the reduced combined mags.
   FFTArray carrierImagBins;
   getImaginary(carrierFFTData, carrierImagBins);
   FFTArray carrierImagXReducedMagStuff;
@@ -96,7 +96,8 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
   getReal(carrierFFTData, carrierRealBins);
   FFTArray carrierReducedRealBins;
   FloatVectorOperations::multiply(
-    carrierRealBins.data(), smallifyFactor, fftSize);
+    carrierReducedRealBins.data(), carrierRealBins.data(),
+    smallifyFactor, fftSize);
 
   ComplexFFTArray ifftData;
   getIFFT(carrierReducedRealBins, combinedBinMags, ifftData);
