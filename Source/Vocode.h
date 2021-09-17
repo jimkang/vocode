@@ -7,6 +7,7 @@ using namespace std;
 const int fftPowerOf2 = 16;
 const int fftSize = 1 << fftPowerOf2;
 typedef array<float, fftSize * 2> FFTArray;
+const float maxCarrierRSqrt = 9.0;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
 static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData);
@@ -33,28 +34,38 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   //for (int i = 0; i < outLen; ++i) {
     //outPtr[i] = i % 2 == 0 ? carrierPtr[i] : infoPtr[i];
   //}
+
+  // Run a real-only FFT on both signals.
   FFTArray carrierFFTData;
   FFTArray infoFFTData;
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
 
+  // Get the magnitudes of the FFT bins.
   array<float, fftSize> carrierBinMagnitudes;
   array<float, fftSize> infoBinMagnitudes;
   getMagnitudes(carrierFFTData, carrierBinMagnitudes);
   getMagnitudes(infoFFTData, infoBinMagnitudes);
 
+  // Get the reciprocal square roots of the magnitudes.
+  const auto reciprocalSqRt = [](float bin){ return 1.0 / sqrt(bin); };
   array<float, fftSize> carrierBinMagnitudeReciprocalSqRts;
   array<float, fftSize> infoBinMagnitudeReciprocalSqRts;
-  const auto reciprocalSqRt = [](float bin){ return 1.0 / sqrt(bin); };
   transform(carrierBinMagnitudes.begin(), carrierBinMagnitudes.end(),
     carrierBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
   transform(infoBinMagnitudes.begin(), infoBinMagnitudes.end(),
     infoBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
-
   // The fifth pair in carrierFFTData aligns with the fifth single value
   // in the magnitude array.
   printRange("carrierBinMagnitudeReciprocalSqRts", 5, 15, carrierBinMagnitudeReciprocalSqRts.data());
   printRange("infoBinMagnitudeReciprocalSqRts", 5, 15, infoBinMagnitudeReciprocalSqRts.data());
+
+  // Clamp the carrier rsqrts. to a max value.
+  const auto clamp = [](float val){ return val > maxCarrierRSqrt ? maxCarrierRSqrt : val; };
+  array<float, fftSize> carrierBinMagRSqRtsClamped;
+  transform(carrierBinMagnitudeReciprocalSqRts.begin(), carrierBinMagnitudeReciprocalSqRts.end(),
+    carrierBinMagRSqRtsClamped.begin(), clamp);
+  printRange("carrierBinMagRSqRtsClamped", 5, 15, carrierBinMagRSqRtsClamped.data());
 }
 
 // fftData will have real and imaginary parts interleaved.
