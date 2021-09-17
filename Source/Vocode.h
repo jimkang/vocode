@@ -7,6 +7,7 @@ using namespace juce;
 using namespace std;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
+static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *outPtr, int outLen);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -28,6 +29,27 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
     //outPtr[i] = i % 2 == 0 ? carrierPtr[i] : infoPtr[i];
   //}
 
+  // We need overlap between blocks.
+  for (int i = 0; i < outLen; i += floor(fftSize/3)) {
+    int end = i + fftSize;
+    if (end > outLen) {
+      end = outLen;
+    }
+    FFTArray carrierBlockArray;
+    FFTArray infoBlockArray;
+    FFTArray outBlockArray;
+
+    copy(carrierPtr + i, carrierPtr + i + fftSize, carrierBlockArray.begin());
+    copy(infoPtr + i, infoPtr + i + fftSize, infoBlockArray.begin());
+
+    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), outBlockArray.data(), fftSize);
+    for (int j = i; j < end; ++j) {
+      outPtr[j] += outBlockArray[j - i];
+    }
+  }
+}
+
+static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *outPtr, int outLen) {
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
   ComplexFFTArray infoFFTData;

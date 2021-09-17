@@ -73,8 +73,8 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
-  reconstruct(carrierBuffer, outBuffer);
-  //vocode(carrierBuffer, infoBuffer, outBuffer);
+  //reconstruct(carrierBuffer, outBuffer);
+  vocode(carrierBuffer, infoBuffer, outBuffer);
 
   // Creating an outStream with the FileOutputStream on the stack creates
   // a problem because the AudioFormatWriter expects to be able to delete
