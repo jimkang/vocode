@@ -21,7 +21,7 @@ static void reconstruct(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& o
 
 static void reconstructChannel(const float *carrierPtr, int outLen, float *outPtr) {
   // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize/3)) {
+  for (int i = 0; i < outLen; i += floor(fftSize - overlapSize)) {
     int end = i + fftSize;
     if (end > outLen) {
       end = outLen;
@@ -29,7 +29,7 @@ static void reconstructChannel(const float *carrierPtr, int outLen, float *outPt
     FFTArray blockArray;
     copy(carrierPtr + i, carrierPtr + i + fftSize, blockArray.begin());
     FFTArray outBlockArray;
-    reconstructBlock(blockArray.data(), outBlockArray.data(), fftSize);
+    reconstructBlock(blockArray.data(), outBlockArray.data(), end - i);
     for (int j = i; j < end; ++j) {
       outPtr[j] += outBlockArray[j - i];
     }

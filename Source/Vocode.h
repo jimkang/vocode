@@ -8,6 +8,8 @@ using namespace std;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
 static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *outPtr, int outLen);
+static void getReducedCombinedAmpFactors(
+  ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -45,7 +47,7 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
     //printRange("carrierPtr", i, i + fftSize, carrierPtr);
     //printRange("carrierBlockArray", 0, fftSize, carrierBlockArray.data());
 
-    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), outBlockArray.data(), fftSize);
+    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), outBlockArray.data(), end - i);
     for (int j = i; j < end; ++j) {
       outPtr[j] += outBlockArray[j - i];
     }
@@ -59,60 +61,70 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
 
-  // Get the magnitudes of the FFT bins.
-  FFTArray carrierBinMagnitudes;
-  FFTArray infoBinMagnitudes;
-  getMagnitudes(carrierFFTData, carrierBinMagnitudes, true);
-  getMagnitudes(infoFFTData, infoBinMagnitudes, false);
-
-  // Clamp the carrier magnitudes. to a max value.
-  const auto clamp = [](float val){ return val > maxCarrierMag ? maxCarrierMag : val; };
-  FFTArray carrierBinMagsClamped;
-  transform(carrierBinMagnitudes.begin(), carrierBinMagnitudes.end(),
-    carrierBinMagsClamped.begin(), clamp);
-  printRange("carrierBinMagsClamped", 5, 15, carrierBinMagsClamped.data());
-
-  // Multiply the clamped carrier mags by the info carrier mags.
-  // Should probably do this in-place for perf. Maybe later.
-  FFTArray combinedBinMags;
-  FloatVectorOperations::multiply(combinedBinMags.data(),
-    carrierBinMagsClamped.data(), infoBinMagnitudes.data(),
-    fftSize);
-  printRange("combinedBinMags", 5, 15, combinedBinMags.data());
-
-  // Reduce the combined mags.
-  FloatVectorOperations::multiply(
-    combinedBinMags.data(), smallifyFactor, fftSize);
-  printRange("combinedBinMags after reduction", 5, 15, combinedBinMags.data());
+  FFTArray reducedAmpFactors;
+  getReducedCombinedAmpFactors(carrierFFTData, infoFFTData, reducedAmpFactors);
 
   // Combine the imaginary components of the carrier fft
-  // with the reduced combined mags.
+  // with the reduced combined amps.
   FFTArray carrierImagBins;
   getImaginary(carrierFFTData, carrierImagBins);
-  FFTArray carrierImagXReducedMagStuff;
-  FloatVectorOperations::multiply(carrierImagXReducedMagStuff.data(),
-    carrierImagBins.data(), combinedBinMags.data(),
+  FFTArray carrierImagWithReducedAmpFactors;
+  FloatVectorOperations::multiply(
+    carrierImagWithReducedAmpFactors.data(),
+    carrierImagBins.data(),
+    reducedAmpFactors.data(),
     fftSize);
 
   // Multiply the real components of the carrier fft by the reduced
-  // combined mags.
+  // combined amps.
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
-  // Reduce the real signal first.
+  FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
-    carrierRealBins.data(), smallifyFactor, fftSize);
-
-  FFTArray carrierRealXMagStuff;
-  FloatVectorOperations::multiply(
-    carrierRealXMagStuff.data(), carrierRealBins.data(),
-    combinedBinMags.data(), fftSize);
+    carrierRealWithReducedAmpFactors.data(),
+    carrierRealBins.data(),
+    reducedAmpFactors.data(),
+    fftSize);
 
   ComplexFFTArray ifftData;
-  getIFFT(carrierRealXMagStuff, combinedBinMags, ifftData);
+  getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
+  //getIFFT(carrierRealBins, carrierImagBins, ifftData);
 
   // Copy the results to the channel.
   const int sampleLimit = outLen > fftSize ? fftSize : outLen;
   for (int i = 0; i < sampleLimit; ++i) {
     outPtr[i] = ifftData[i];
   }
+}
+
+static void getReducedCombinedAmpFactors(
+  ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors) {
+
+  // Get the magnitudes of the FFT bins.
+  FFTArray carrierAmpFactors;
+  FFTArray infoAmpFactors;
+  getMagnitudes(carrierFFTData, carrierAmpFactors, false);
+  getMagnitudes(infoFFTData, infoAmpFactors, false);
+
+  // Clamp the carrier magnitudes. to a max value.
+  const auto clamp = [](float val){ return val > maxCarrierMag ? maxCarrierMag : val; };
+  FFTArray carrierAmpFactorsClamped;
+  transform(carrierAmpFactors.begin(), carrierAmpFactors.end(),
+    carrierAmpFactorsClamped.begin(), clamp);
+  printRange("carrierAmpFactorsClamped", 5, 15, carrierAmpFactorsClamped.data());
+
+  // Multiply the clamped carrier amps by the info carrier amps.
+  FFTArray combinedAmpFactors;
+  FloatVectorOperations::multiply(
+    combinedAmpFactors.data(),
+    carrierAmpFactorsClamped.data(),
+    //carrierAmpFactors.data(),
+    infoAmpFactors.data(),
+    fftSize);
+  printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
+
+  // Reduce the combined amps.
+  FloatVectorOperations::multiply(
+    reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
+  printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
 }
