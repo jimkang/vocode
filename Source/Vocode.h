@@ -30,7 +30,7 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   //}
 
   // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize/overlapAmount)) {
+  for (int i = 0; i < outLen; i += floor(fftSize - overlapSize)) {
     int end = i + fftSize;
     if (end > outLen) {
       end = outLen;
@@ -41,6 +41,9 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
 
     copy(carrierPtr + i, carrierPtr + i + fftSize, carrierBlockArray.begin());
     copy(infoPtr + i, infoPtr + i + fftSize, infoBlockArray.begin());
+
+    //printRange("carrierPtr", i, i + fftSize, carrierPtr);
+    //printRange("carrierBlockArray", 0, fftSize, carrierBlockArray.data());
 
     vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), outBlockArray.data(), fftSize);
     for (int j = i; j < end; ++j) {
@@ -59,8 +62,8 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
   // Get the magnitudes of the FFT bins.
   FFTArray carrierBinMagnitudes;
   FFTArray infoBinMagnitudes;
-  getMagnitudes(carrierFFTData, carrierBinMagnitudes);
-  getMagnitudes(infoFFTData, infoBinMagnitudes);
+  getMagnitudes(carrierFFTData, carrierBinMagnitudes, true);
+  getMagnitudes(infoFFTData, infoBinMagnitudes, false);
 
   // Clamp the carrier magnitudes. to a max value.
   const auto clamp = [](float val){ return val > maxCarrierMag ? maxCarrierMag : val; };
@@ -91,10 +94,14 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
     carrierImagBins.data(), combinedBinMags.data(),
     fftSize);
 
-  // Multipy the real components of the carrier fft by the reduced
+  // Multiply the real components of the carrier fft by the reduced
   // combined mags.
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
+  // Reduce the real signal first.
+  FloatVectorOperations::multiply(
+    carrierRealBins.data(), smallifyFactor, fftSize);
+
   FFTArray carrierRealXMagStuff;
   FloatVectorOperations::multiply(
     carrierRealXMagStuff.data(), carrierRealBins.data(),
