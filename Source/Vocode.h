@@ -91,16 +91,17 @@ static void vocodeBlock(const float *carrierPtr,const float *infoPtr, float *out
     carrierImagBins.data(), combinedBinMags.data(),
     fftSize);
 
-  // Reduce the real components of the carrier fft.
+  // Multipy the real components of the carrier fft by the reduced
+  // combined mags.
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
-  FFTArray carrierReducedRealBins;
+  FFTArray carrierRealXMagStuff;
   FloatVectorOperations::multiply(
-    carrierReducedRealBins.data(), carrierRealBins.data(),
-    smallifyFactor, fftSize);
+    carrierRealXMagStuff.data(), carrierRealBins.data(),
+    combinedBinMags.data(), fftSize);
 
   ComplexFFTArray ifftData;
-  getIFFT(carrierReducedRealBins, combinedBinMags, ifftData);
+  getIFFT(carrierRealXMagStuff, combinedBinMags, ifftData);
 
   // Copy the results to the channel.
   const int sampleLimit = outLen > fftSize ? fftSize : outLen;

@@ -58,8 +58,10 @@ static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& iff
 // Assumes fftData will have real and imaginary parts interleaved.
 static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes) {
   for (int i = 0; i < fftData.size(); i += 2) {
-    const float realSquared = pow(fftData[i], 2);
-    const float imagSquared = pow(fftData[i + 1], 2);
+    const float real = fftData[i];
+    const float imag = fftData[i + 1];
+    const float realSquared = real * real;
+    const float imagSquared = imag * imag;
     // I don't know that adding this tiny number
     // matters.
     const float sum = realSquared + imagSquared + tinyNumber;
