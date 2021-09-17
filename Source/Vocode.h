@@ -2,15 +2,17 @@
 #include <math.h>
 
 using namespace juce;
+using namespace std;
 
 const int fftPowerOf2 = 16;
 const int fftSize = 1 << fftPowerOf2;
-typedef std::array<float, fftSize * 2> FFTArray;
+typedef array<float, fftSize * 2> FFTArray;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
 static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData);
-static void getMagnitudes(FFTArray& fftData, std::array<float, fftSize>& binMagnitudes);
+static void getMagnitudes(FFTArray& fftData, array<float, fftSize>& binMagnitudes);
 static void printSamples(const char *arrayName, float *array, int arraySize);
+static void printRange(const char *arrayName, int lowerBound, int upperBound, float *array);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -36,15 +38,28 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
 
-  std::array<float, fftSize> carrierBinMagnitudes;
-  std::array<float, fftSize> infoBinMagnitudes;
+  array<float, fftSize> carrierBinMagnitudes;
+  array<float, fftSize> infoBinMagnitudes;
   getMagnitudes(carrierFFTData, carrierBinMagnitudes);
   getMagnitudes(infoFFTData, infoBinMagnitudes);
+
+  array<float, fftSize> carrierBinMagnitudeReciprocalSqRts;
+  array<float, fftSize> infoBinMagnitudeReciprocalSqRts;
+  const auto reciprocalSqRt = [](float bin){ return 1.0 / sqrt(bin); };
+  transform(carrierBinMagnitudes.begin(), carrierBinMagnitudes.end(),
+    carrierBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
+  transform(infoBinMagnitudes.begin(), infoBinMagnitudes.end(),
+    infoBinMagnitudeReciprocalSqRts.begin(), reciprocalSqRt);
+
+  // The fifth pair in carrierFFTData aligns with the fifth single value
+  // in the magnitude array.
+  printRange("carrierBinMagnitudeReciprocalSqRts", 5, 15, carrierBinMagnitudeReciprocalSqRts.data());
+  printRange("infoBinMagnitudeReciprocalSqRts", 5, 15, infoBinMagnitudeReciprocalSqRts.data());
 }
 
 // fftData will have real and imaginary parts interleaved.
 static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
-  std::fill(fftData.begin(), fftData.end(), 0.0f);
+  fill(fftData.begin(), fftData.end(), 0.0f);
   const int sampleLimit = sampleCount > fftSize ? fftSize : sampleCount;
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
     fftData[sampleIndex] = samplePtr[sampleIndex];
@@ -63,19 +78,27 @@ static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
 }
 
 // Assumes fftData will have real and imaginary parts interleaved.
-static void getMagnitudes(FFTArray& fftData, std::array<float, fftSize>& binMagnitudes) {
+static void getMagnitudes(FFTArray& fftData, array<float, fftSize>& binMagnitudes) {
   for (int i = 0; i < fftData.size(); i += 2) {
     const float realSquared = pow(fftData[i], 2);
     const float imagSquared = pow(fftData[i + 1], 2);
     binMagnitudes[i/2] = sqrt(realSquared + imagSquared);
-    if (i > 10 && i < 21) {
-      std::cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << std::endl;
+    if (i >= 10 && i < 21) {
+      cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << endl;
     }
   }
 }
 
 static void printSamples(const char *arrayName, float *array, int arraySize) {
-  std::cout << arrayName << " example values early: " << array[arraySize/2] << ", " << array[arraySize/2+1] << std::endl;
-  //std::cout << arrayName << " sample late: " << array[arraySize + arraySize/2] << std::endl;
-  std::cout << arrayName << " example values late: " << array[arraySize + arraySize/2 + 2] << ", " << array[arraySize + arraySize/2 + 2] << std::endl;
+  cout << arrayName << " example values early: " << array[arraySize/2] << ", " << array[arraySize/2+1] << endl;
+  //cout << arrayName << " sample late: " << array[arraySize + arraySize/2] << endl;
+  cout << arrayName << " example values late: " << array[arraySize + arraySize/2 + 2] << ", " << array[arraySize + arraySize/2 + 2] << endl;
+}
+
+static void printRange(const char *arrayName, int lowerBound, int upperBound, float *array) {
+  cout << arrayName << " values ";
+  for (int i = lowerBound; i < upperBound; ++i) {
+    cout << "Value " << i << ": " << array[i] << ", ";
+  }
+  cout << endl;
 }
