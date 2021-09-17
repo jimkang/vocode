@@ -66,6 +66,14 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   transform(carrierBinMagnitudeReciprocalSqRts.begin(), carrierBinMagnitudeReciprocalSqRts.end(),
     carrierBinMagRSqRtsClamped.begin(), clamp);
   printRange("carrierBinMagRSqRtsClamped", 5, 15, carrierBinMagRSqRtsClamped.data());
+
+  // Multiply the clamped carrier mag. rsqrts by the info carrier mag. sqrts.
+  // Should probably do this in-place for perf. Maybe later.
+  array<float, fftSize> combinedBinMagSqRts;
+  FloatVectorOperations::multiply(combinedBinMagSqRts.data(),
+    carrierBinMagRSqRtsClamped.data(), infoBinMagnitudeReciprocalSqRts.data(),
+    fftSize);
+  printRange("combinedBinMagSqRts", 5, 15, combinedBinMagSqRts.data());
 }
 
 // fftData will have real and imaginary parts interleaved.
