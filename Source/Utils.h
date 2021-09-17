@@ -81,8 +81,8 @@ static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals) {
 
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData) {
   for (int i = 0; i < fftSize; ++i) {
-    fftData[i] = realVals[i * 2];
-    fftData[i] = imagVals[i * 2 + 1];
+    fftData[i * 2] = realVals[i];
+    fftData[i * 2 + 1] = imagVals[i];
   }
 }
 

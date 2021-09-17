@@ -28,6 +28,12 @@ static void reconstructChannel(const float *carrierPtr, int outLen, float *outPt
   FFTArray carrierImagBins;
   getImaginary(carrierFFTData, carrierImagBins);
 
+  ComplexFFTArray testZipArray;
+  zipTogetherComplexArray(carrierRealBins,
+    carrierImagBins, testZipArray);
+
+  cout << "Are carrierFFTData and testZipArray equal?" << (carrierFFTData == testZipArray) << endl;
+
   ComplexFFTArray ifftData;
   getIFFT(carrierRealBins, carrierImagBins, ifftData);
 
