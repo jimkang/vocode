@@ -1,4 +1,5 @@
 #include <JuceHeader.h>
+#include <math.h>
 
 using namespace juce;
 
@@ -8,7 +9,8 @@ typedef std::array<float, fftSize * 2> FFTArray;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, const int outLen, float *outPtr);
 static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData);
-static void printSamples(const char *arrayName, FFTArray& fftData, int arraySize);
+static void getMagnitudes(FFTArray& fftData, std::array<float, fftSize>& binMagnitudes);
+static void printSamples(const char *arrayName, float *array, int arraySize);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer, AudioBuffer<float>& outBuffer) {
   int channelCount = carrierBuffer.getNumChannels();
@@ -33,29 +35,47 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
   FFTArray infoFFTData;
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
+
+  std::array<float, fftSize> carrierBinMagnitudes;
+  std::array<float, fftSize> infoBinMagnitudes;
+  getMagnitudes(carrierFFTData, carrierBinMagnitudes);
+  getMagnitudes(infoFFTData, infoBinMagnitudes);
 }
 
+// fftData will have real and imaginary parts interleaved.
 static void getFFT(const float *samplePtr, int sampleCount, FFTArray& fftData) {
   std::fill(fftData.begin(), fftData.end(), 0.0f);
   const int sampleLimit = sampleCount > fftSize ? fftSize : sampleCount;
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
     fftData[sampleIndex] = samplePtr[sampleIndex];
   }
-  printSamples("fftData, before anything", fftData, sampleLimit);
+  printSamples("fftData, before anything", fftData.data(), sampleLimit);
 
   dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
   window.multiplyWithWindowingTable(fftData.data(), fftSize);
 
-  printSamples("fftData, after windowing", fftData, sampleLimit);
+  printSamples("fftData, after windowing", fftData.data(), sampleLimit);
 
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyForwardTransform(fftData.data());
 
-  printSamples("fftData, after FFT", fftData, sampleLimit);
+  printSamples("fftData, after FFT", fftData.data(), sampleLimit);
 }
 
-static void printSamples(const char *arrayName, FFTArray& fftData, int arraySize) {
-  std::cout << arrayName << " sample early: " << fftData[arraySize/2] << std::endl;
-  //std::cout << arrayName << " sample late: " << fftData[arraySize + arraySize/2] << std::endl;
-  std::cout << arrayName << " sample late: " << fftData[arraySize + arraySize/2 + 1] << std::endl;
+// Assumes fftData will have real and imaginary parts interleaved.
+static void getMagnitudes(FFTArray& fftData, std::array<float, fftSize>& binMagnitudes) {
+  for (int i = 0; i < fftData.size(); i += 2) {
+    const float realSquared = pow(fftData[i], 2);
+    const float imagSquared = pow(fftData[i + 1], 2);
+    binMagnitudes[i/2] = sqrt(realSquared + imagSquared);
+    if (i > 10 && i < 21) {
+      std::cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << std::endl;
+    }
+  }
+}
+
+static void printSamples(const char *arrayName, float *array, int arraySize) {
+  std::cout << arrayName << " example values early: " << array[arraySize/2] << ", " << array[arraySize/2+1] << std::endl;
+  //std::cout << arrayName << " sample late: " << array[arraySize + arraySize/2] << std::endl;
+  std::cout << arrayName << " example values late: " << array[arraySize + arraySize/2 + 2] << ", " << array[arraySize + arraySize/2 + 2] << std::endl;
 }
