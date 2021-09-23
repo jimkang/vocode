@@ -37,7 +37,7 @@ static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fft
   printSamples("fftData, after windowing", fftData.data(), sampleLimit);
 
   dsp::FFT fft(fftPowerOf2);
-  fft.performRealOnlyForwardTransform(fftData.data());
+  fft.performRealOnlyForwardTransform(fftData.data(), true);
 
   // Run the carrier's reduced real FFT bins and
   // the carrier imaginary bins combined with the

@@ -9,6 +9,7 @@
 #include <JuceHeader.h>
 #include "Vocode.h"
 #include "Reconstruct.h"
+#include "WriteAudio.h"
 
 //==============================================================================
 int main (int argc, char* argv[])
@@ -28,8 +29,7 @@ int main (int argc, char* argv[])
     std::cerr << "Info file does not exist." << std::endl;
     return 1;
   }
-  juce::File outFile(argv[3]);
-  outFile.deleteFile();
+  const char *outFilePath = argv[3];
 
   juce::AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
@@ -76,31 +76,7 @@ int main (int argc, char* argv[])
   //reconstruct(carrierBuffer, outBuffer);
   vocode(carrierBuffer, infoBuffer, outBuffer);
 
-  // Creating an outStream with the FileOutputStream on the stack creates
-  // a problem because the AudioFormatWriter expects to be able to delete
-  // it when it is destroyed. So, when we delete the writer below, it
-  // will try to delete the outStream, which it cannot!
-  // https://github.com/juce-framework/JUCE/blob/master/modules/juce_audio_formats/format/juce_AudioFormatWriter.cpp#L61
-  //juce::FileOutputStream outStream(outFile, outLen * channelCount);
-  std::unique_ptr<juce::FileOutputStream> outStream = outFile.createOutputStream();
-  if (outStream->failedToOpen()) {
-    std::cerr << "Could not open output file." << std::endl;
-    return 1;
-  }
-
-  juce::WavAudioFormat wavFormat;
-  std::cout << "channelCount: " << channelCount << ", outLen: " << outLen << ", bitsPerSample: " << bitsPerSample << std::endl;
-  juce::AudioFormatWriter *writer = wavFormat.createWriterFor(
-    outStream.get(), sampleRate, channelCount, bitsPerSample, {}, 0
-  );
-  if (writer == nullptr) {
-    std::cerr << "Could not write to output file." << std::endl;
-    return 1;
-  }
-  outStream.release();
-  writer->writeFromAudioSampleBuffer(outBuffer, 0, outLen);
-
-  delete writer;
+  writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
   return 0;
 }
