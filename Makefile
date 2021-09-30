@@ -2,3 +2,6 @@
 
 try:
 	cd Builds/LinuxMakefile/build && ./vocode ../../../example-media/donut.wav ../../../example-media/talking.wav ../../../example-media/result.wav
+
+debug:
+	cd Builds/LinuxMakefile/build && gdb --args vocode ../../../example-media/donut.wav ../../../example-media/talking.wav ../../../example-media/result.wav

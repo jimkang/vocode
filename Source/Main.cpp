@@ -73,10 +73,21 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
+  map<string, AudioBuffer<float>> diagnosticBuffers {
+    {"carrierHann", AudioBuffer<float>(channelCount, outLen)},
+    {"infoHann", AudioBuffer<float>(channelCount, outLen)}
+  };
+
   //reconstruct(carrierBuffer, outBuffer);
-  vocode(carrierBuffer, infoBuffer, outBuffer);
+  vocode(carrierBuffer, infoBuffer, diagnosticBuffers, outBuffer);
 
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
+
+  auto it = diagnosticBuffers.begin();
+  while (it != diagnosticBuffers.end()) {
+    auto audioBuffer = it->second;
+    writeBufferToFile(audioBuffer, sampleRate, bitsPerSample, it->first.c_str());
+  }
 
   return 0;
 }

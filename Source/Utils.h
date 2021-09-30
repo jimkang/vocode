@@ -11,6 +11,7 @@ static bool verbose = true;
 
 typedef array<float, fftSize * 2> ComplexFFTArray;
 typedef array<float, fftSize> FFTArray;
+typedef map<string, float *> DiagnosticPtrs;
 
 static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData);
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData);
@@ -22,19 +23,17 @@ static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals);
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData);
 static float reciprocalSqRt(float bin);
 
+static void applyHannWindow(ComplexFFTArray& fftData) {
+  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+  window.multiplyWithWindowingTable(fftData.data(), fftSize);
+}
+
 // fftData will have real and imaginary parts interleaved.
 static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData) {
-  fill(fftData.begin(), fftData.end(), 0.0f);
   const int sampleLimit = sampleCount > fftSize ? fftSize : sampleCount;
   for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
     fftData[sampleIndex] = samplePtr[sampleIndex];
   }
-  printSamples("fftData, before anything", fftData.data(), sampleLimit);
-
-  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
-  window.multiplyWithWindowingTable(fftData.data(), fftSize);
-
-  printSamples("fftData, after windowing", fftData.data(), sampleLimit);
 
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyForwardTransform(fftData.data(), true);
@@ -120,4 +119,16 @@ static void printRange(const char *arrayName, int lowerBound, int upperBound, co
 
 static float reciprocalSqRt(float bin) {
   return 1.0 / sqrt(bin);
+}
+
+// Only copy the first (meaningful) half of the complex array.
+static void writeArrayToPtr(
+  const ComplexFFTArray& complexFFTArray,
+  const string& arrayName,
+  DiagnosticPtrs& diagnosticWritePtrs) {
+
+  float *writePtr = diagnosticWritePtrs[arrayName];
+  for (int i = 0; i < fftSize; ++i) {
+    writePtr[i] = complexFFTArray[i];
+  }
 }
