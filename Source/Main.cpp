@@ -73,13 +73,21 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
-  //map<string, AudioBuffer<float>> diagnosticBuffers {
-    //{"carrierHann", AudioBuffer<float>(channelCount, outLen)},
-    //{"infoHann", AudioBuffer<float>(channelCount, outLen)}
-  //};
+  DebugSignalsForChannels debugSignalsForChannels;
 
+  for (int ch = 0; ch < channelCount; ++ch) {
+    DebugSignals *debugSignals = new DebugSignals({
+      {"carrierHann", new float[outLen]},
+      {"infoHann", new float[outLen]}
+    });
+    debugSignalsForChannels[ch] = debugSignals;
+    float *signal = (*debugSignals)[string("carrierHann")];
+  };
+
+  DebugSignals *debugSignals = debugSignalsForChannels[0];
+  float *signal = (*debugSignals)["carrierHann"];
   //reconstruct(carrierBuffer, outBuffer);
-  vocode(carrierBuffer, infoBuffer, outBuffer);
+  vocode(carrierBuffer, infoBuffer, debugSignalsForChannels, outBuffer);
 
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
@@ -88,6 +96,13 @@ int main (int argc, char* argv[])
     //auto audioBuffer = it->second;
     //writeBufferToFile(audioBuffer, sampleRate, bitsPerSample, it->first.c_str());
   //}
+  // TODO: write debug signals to files.
 
+  for (int ch = 0; ch < channelCount; ++ch) {
+    DebugSignals *debugSignals = debugSignalsForChannels[ch];
+    delete (*debugSignals)["carrierHann"];
+    delete (*debugSignals)["infoHann"];
+    delete debugSignals;
+  };
   return 0;
 }

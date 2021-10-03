@@ -6,15 +6,15 @@
 using namespace juce;
 using namespace std;
 
-//static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DiagnosticPtrs& diagnosticWritePtrs, float *outPtr);
-static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, float *outPtr);
-//static void vocodeBlock(const float *carrierPtr, const float *infoPtr, DiagnosticPtrs& diagnosticWritePtrs, float *outPtr, int outLen);
-static void vocodeBlock(const float *carrierPtr, const float *infoPtr, float *outPtr, int outLen);
+static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DebugSignals& debugSignals, float *outPtr);
+//static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, float *outPtr);
+static void vocodeBlock(const float *carrierPtr, const float *infoPtr, DebugSignals& debugSignals, float *outPtr, int outLen);
+//static void vocodeBlock(const float *carrierPtr, const float *infoPtr, float *outPtr, int outLen);
 static void getReducedCombinedAmpFactors(
   ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer,
-  //map<string, AudioBuffer<float>> diagnosticBuffers,
+  DebugSignalsForChannels& debugSignalsForChannels,
   AudioBuffer<float>& outBuffer) {
 
   int channelCount = carrierBuffer.getNumChannels();
@@ -27,22 +27,21 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
     const float *infoPtr = infoBuffer.getReadPointer(ch);
     float *outPtr = outBuffer.getWritePointer(ch);
 
-    //DiagnosticPtrs diagnosticWritePtrs;
+    //DebugSignal debugSignals;
 //
-    //for (auto it = diagnosticBuffers.begin();
-      //it != diagnosticBuffers.end();
+    //for (auto it = debugSignals.begin();
+      //it != debugSignals.end();
       //++it) {
       //auto audioBuffer = it->second;
-      //diagnosticWritePtrs[it->first] = audioBuffer.getWritePointer(ch);
+      //debugSignals[it->first] = audioBuffer.getWritePointer(ch);
     //}
 
-    vocodeChannel(carrierPtr, infoPtr, outBuffer.getNumSamples(), outPtr);
+
+    vocodeChannel(carrierPtr, infoPtr, outBuffer.getNumSamples(), *debugSignalsForChannels[ch], outPtr);
   }
 }
 
-static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen,
-//DiagnosticPtrs& diagnosticWritePtrs,
-float *outPtr) {
+static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DebugSignals& debugSignals, float *outPtr) {
   // Some dummy buffer writing.
   //for (int i = 0; i < outLen; ++i) {
     //outPtr[i] = i % 2 == 0 ? carrierPtr[i] : infoPtr[i];
@@ -66,7 +65,7 @@ float *outPtr) {
 
     cout << "vocoding block starting at " << i << endl;
 
-    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), //diagnosticWritePtrs,
+    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), debugSignals,
 outBlockArray.data(), end - i);
     for (int j = i; j < end; ++j) {
       outPtr[j] += outBlockArray[j - i];
@@ -75,7 +74,7 @@ outBlockArray.data(), end - i);
 }
 
 static void vocodeBlock(const float *carrierPtr, const float *infoPtr,
-//DiagnosticPtrs& diagnosticWritePtrs,
+DebugSignals& debugSignals,
  float *outPtr, int outLen) {
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
@@ -86,8 +85,10 @@ static void vocodeBlock(const float *carrierPtr, const float *infoPtr,
   applyHannWindow(carrierFFTData);
   applyHannWindow(infoFFTData);
 
-  //writeArrayToPtr(carrierFFTData, "carrierHann", diagnosticWritePtrs);
-  //writeArrayToPtr(infoFFTData, "infoHann", diagnosticWritePtrs);
+  float *signal = debugSignals["carrierHann"];
+
+  writeArrayToPtr(carrierFFTData, "carrierHann", debugSignals);
+  writeArrayToPtr(infoFFTData, "infoHann", debugSignals);
 
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);

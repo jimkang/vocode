@@ -11,9 +11,9 @@ static bool verbose = true;
 
 typedef array<float, fftSize * 2> ComplexFFTArray;
 typedef array<float, fftSize> FFTArray;
-typedef map<string, float *> DiagnosticPtrs;
+typedef map<string, float *> DebugSignals;
+typedef array<DebugSignals *, 2> DebugSignalsForChannels;
 
-static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData);
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData);
 static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes, bool addTinyNumber);
 static void printSamples(const char *arrayName, float *array, int arraySize);
@@ -125,9 +125,9 @@ static float reciprocalSqRt(float bin) {
 static void writeArrayToPtr(
   const ComplexFFTArray& complexFFTArray,
   const string& arrayName,
-  DiagnosticPtrs& diagnosticWritePtrs) {
+  DebugSignals& debugSignals) {
 
-  float *writePtr = diagnosticWritePtrs[arrayName];
+  float *writePtr = debugSignals[arrayName];
   for (int i = 0; i < fftSize; ++i) {
     writePtr[i] = complexFFTArray[i];
   }
