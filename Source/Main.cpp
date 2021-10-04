@@ -92,13 +92,13 @@ int main (int argc, char* argv[])
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
   DebugSignals *debugSignalsLeft = debugSignalsForChannels[0];
-  auto it = debugSignalsLeft->begin();
+
   DebugSignals *debugSignalsRight = NULL;
   if (channelCount > 1) {
     debugSignalsRight = debugSignalsForChannels[1];
   }
 
-  while (it != debugSignals->end()) {
+  for (auto it = debugSignalsLeft->begin(); it != debugSignals->end(); ++it) {
     float *signalLeft = it->second;
     float *signalRight = NULL;
     // Assumption: Signal names are the same in the DebugSignals for each channel.
