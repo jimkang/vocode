@@ -91,12 +91,35 @@ int main (int argc, char* argv[])
 
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
-  //auto it = diagnosticBuffers.begin();
-  //while (it != diagnosticBuffers.end()) {
-    //auto audioBuffer = it->second;
-    //writeBufferToFile(audioBuffer, sampleRate, bitsPerSample, it->first.c_str());
-  //}
-  // TODO: write debug signals to files.
+  DebugSignals *debugSignalsLeft = debugSignalsForChannels[0];
+  auto it = debugSignalsLeft->begin();
+  DebugSignals *debugSignalsRight = NULL;
+  if (channelCount > 1) {
+    debugSignalsRight = debugSignalsForChannels[1];
+  }
+
+  while (it != debugSignals->end()) {
+    float *signalLeft = it->second;
+    float *signalRight = NULL;
+    // Assumption: Signal names are the same in the DebugSignals for each channel.
+    if (debugSignalsRight) {
+      signalRight = (*debugSignalsRight)[it->first];
+    }
+
+    float *signalsByChannel[1] = { signalLeft };
+    float *dualSignalsByChannel[2] = { signalLeft, signalRight };
+
+    string filePath = string("./").append(it->first);
+
+    if (!writeArrayToFile(signalRight ? dualSignalsByChannel : signalsByChannel, channelCount, outLen,
+      sampleRate, bitsPerSample, filePath.c_str())) {
+
+      cerr << "Unable to write debug signal for " << it->first << endl;
+    }
+  }
+
+  for (int ch = 0; ch < debugSignalsForChannels.size(); ++ch) {
+  }
 
   for (int ch = 0; ch < channelCount; ++ch) {
     DebugSignals *debugSignals = debugSignalsForChannels[ch];

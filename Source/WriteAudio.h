@@ -33,3 +33,32 @@ bool writeBufferToFile(const juce::AudioBuffer<float>& outBuffer,
 
   return true;
 }
+
+// Returns true it it was able to write.
+bool writeArrayToFile(const float *const *data, int channelCount, int sampleCount,
+  float sampleRate, float bitsPerSample, const char *filePath) {
+
+  juce::File outFile(filePath);
+  outFile.deleteFile();
+
+  std::unique_ptr<juce::FileOutputStream> outStream = outFile.createOutputStream();
+  if (outStream->failedToOpen()) {
+    std::cerr << "Could not open output file." << std::endl;
+    return false;
+  }
+
+  juce::WavAudioFormat wavFormat;
+  juce::AudioFormatWriter *writer = wavFormat.createWriterFor(
+    outStream.get(), sampleRate, channelCount, bitsPerSample, {}, 0
+  );
+  if (writer == nullptr) {
+    std::cerr << "Could not write to output file." << std::endl;
+    return false;
+  }
+  outStream.release();
+  writer->writeFromFloatArrays(data, channelCount, sampleCount);
+
+  delete writer;
+
+  return true;
+}
