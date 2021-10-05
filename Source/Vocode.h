@@ -8,7 +8,15 @@ using namespace std;
 
 static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DebugSignals& debugSignals, float *outPtr);
 //static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, float *outPtr);
-static void vocodeBlock(const float *carrierPtr, const float *infoPtr, DebugSignals& debugSignals, float *outPtr, int outLen);
+static void vocodeBlock(
+  const float *carrierPtr,
+  const float *infoPtr,
+  // offsetOfBlock is how far into the whole signal that this
+  // particular block starts.
+  int offsetOfBlock,
+  DebugSignals& debugSignals,
+  float *outPtr,
+  int outLen);
 //static void vocodeBlock(const float *carrierPtr, const float *infoPtr, float *outPtr, int outLen);
 static void getReducedCombinedAmpFactors(
   ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
@@ -26,16 +34,6 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
     const float *carrierPtr = carrierBuffer.getReadPointer(ch);
     const float *infoPtr = infoBuffer.getReadPointer(ch);
     float *outPtr = outBuffer.getWritePointer(ch);
-
-    //DebugSignal debugSignals;
-//
-    //for (auto it = debugSignals.begin();
-      //it != debugSignals.end();
-      //++it) {
-      //auto audioBuffer = it->second;
-      //debugSignals[it->first] = audioBuffer.getWritePointer(ch);
-    //}
-
 
     vocodeChannel(carrierPtr, infoPtr, outBuffer.getNumSamples(), *debugSignalsForChannels[ch], outPtr);
   }
@@ -65,30 +63,45 @@ static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int out
 
     cout << "vocoding block starting at " << i << endl;
 
-    vocodeBlock(carrierBlockArray.data(), infoBlockArray.data(), debugSignals,
-outBlockArray.data(), end - i);
+    vocodeBlock(
+      carrierBlockArray.data(),
+      infoBlockArray.data(),
+      i,
+      debugSignals,
+      outBlockArray.data(),
+      end - i);
+
+    // TODO: Have vocodeBlock work directly on outPtr.
     for (int j = i; j < end; ++j) {
       outPtr[j] += outBlockArray[j - i];
     }
   }
 }
 
-static void vocodeBlock(const float *carrierPtr, const float *infoPtr,
-DebugSignals& debugSignals,
- float *outPtr, int outLen) {
+static void vocodeBlock(
+  const float *carrierPtr,
+  const float *infoPtr,
+  // offsetOfBlock is how far into the whole signal that this
+  // particular block starts.
+  int offsetOfBlock,
+  DebugSignals& debugSignals,
+  float *outPtr,
+  int outLen) {
+
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
   ComplexFFTArray infoFFTData;
-  fill(carrierFFTData.begin(), carrierFFTData.end(), 0.0f);
-  fill(infoFFTData.begin(), infoFFTData.end(), 0.0f);
+
+  for (int sampleIndex = 0; sampleIndex < outLen; ++sampleIndex) {
+    carrierFFTData[sampleIndex] = carrierPtr[sampleIndex];
+    infoFFTData[sampleIndex] = infoPtr[sampleIndex];
+  }
 
   applyHannWindow(carrierFFTData);
   applyHannWindow(infoFFTData);
 
-  float *signal = debugSignals["carrierHann"];
-
-  writeArrayToPtr(carrierFFTData, "carrierHann", debugSignals);
-  writeArrayToPtr(infoFFTData, "infoHann", debugSignals);
+  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
+  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
 
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);

@@ -121,14 +121,15 @@ static float reciprocalSqRt(float bin) {
   return 1.0 / sqrt(bin);
 }
 
-// Only copy the first (meaningful) half of the complex array.
-static void writeArrayToPtr(
-  const ComplexFFTArray& complexFFTArray,
-  const string& arrayName,
+static void saveArrayToDebug(
+  const float *array,
+  int writeStart,
+  int length,
+  const string& debugName,
   DebugSignals& debugSignals) {
 
-  float *writePtr = debugSignals[arrayName];
-  for (int i = 0; i < fftSize; ++i) {
-    writePtr[i] = complexFFTArray[i];
+  float *writePtr = debugSignals[debugName];
+  for (int i = 0; i < length; ++i) {
+    writePtr[writeStart + i] += array[i];
   }
 }
