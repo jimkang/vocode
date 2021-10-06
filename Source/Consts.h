@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-const int fftPowerOf2 = 12;
+const int fftPowerOf2 = 10;
 const int fftSize = 1 << fftPowerOf2;
 
 // These come from Miller Puckette's timbre-stamp Pure Data patch.

@@ -111,7 +111,7 @@ int main (int argc, char* argv[])
     float *signalsByChannel[1] = { signalLeft };
     float *dualSignalsByChannel[2] = { signalLeft, signalRight };
 
-    string filePath = string("./").append(it->first);
+    string filePath = string("../../../debug-snapshots/juce/").append(it->first);
 
     if (!writeArrayToFile(signalRight ? dualSignalsByChannel : signalsByChannel, channelCount, outLen,
       sampleRate, bitsPerSample, filePath.c_str())) {
