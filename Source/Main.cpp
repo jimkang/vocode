@@ -120,13 +120,11 @@ int main (int argc, char* argv[])
     }
   }
 
-  for (int ch = 0; ch < debugSignalsForChannels.size(); ++ch) {
-  }
-
   for (int ch = 0; ch < channelCount; ++ch) {
     DebugSignals *debugSignals = debugSignalsForChannels[ch];
-    delete (*debugSignals)["carrierHann"];
-    delete (*debugSignals)["infoHann"];
+    for (auto it = debugSignals->begin(); it != debugSignals->end(); ++it) {
+      delete it->second;
+    }
     delete debugSignals;
   };
   return 0;
