@@ -39,7 +39,12 @@ static void reconstructChannel(const float *carrierPtr, int outLen, float *outPt
 static void reconstructBlock(const float *carrierPtr, float *outPtr, int outLen) {
   // Run a real-only FFT on carrier signal
   ComplexFFTArray carrierFFTData;
-  getFFT(carrierPtr, outLen, carrierFFTData);
+
+  for (int sampleIndex = 0; sampleIndex < outLen; ++sampleIndex) {
+    carrierFFTData[sampleIndex] = carrierPtr[sampleIndex];
+  }
+
+  getFFT(carrierFFTData);
 
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);

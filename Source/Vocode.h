@@ -103,8 +103,8 @@ static void vocodeBlock(
   saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
   saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
 
-  getFFT(carrierPtr, outLen, carrierFFTData);
-  getFFT(infoPtr, outLen, infoFFTData);
+  getFFT(carrierFFTData);
+  getFFT(infoFFTData);
 
   saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
   saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);

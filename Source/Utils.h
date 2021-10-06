@@ -29,19 +29,9 @@ static void applyHannWindow(ComplexFFTArray& fftData) {
 }
 
 // fftData will have real and imaginary parts interleaved.
-static void getFFT(const float *samplePtr, int sampleCount, ComplexFFTArray& fftData) {
-  const int sampleLimit = sampleCount > fftSize ? fftSize : sampleCount;
-  for (int sampleIndex = 0; sampleIndex < sampleLimit; ++sampleIndex) {
-    fftData[sampleIndex] = samplePtr[sampleIndex];
-  }
-
+static void getFFT(ComplexFFTArray& fftData) {
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyForwardTransform(fftData.data(), true);
-
-  // Run the carrier's reduced real FFT bins and
-  // the carrier imaginary bins combined with the
-  // magnitude stuff through the inverse FFT to resynthesize.
-  printSamples("fftData, after FFT", fftData.data(), sampleLimit);
 }
 
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData) {
