@@ -106,6 +106,9 @@ static void vocodeBlock(
   getFFT(carrierPtr, outLen, carrierFFTData);
   getFFT(infoPtr, outLen, infoFFTData);
 
+  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
+  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);
+
   FFTArray reducedAmpFactors;
   getReducedCombinedAmpFactors(carrierFFTData, infoFFTData, reducedAmpFactors);
 

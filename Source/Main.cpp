@@ -78,7 +78,9 @@ int main (int argc, char* argv[])
   for (int ch = 0; ch < channelCount; ++ch) {
     DebugSignals *debugSignals = new DebugSignals({
       {"carrierHann", new float[outLen]},
-      {"infoHann", new float[outLen]}
+      {"infoHann", new float[outLen]},
+      {"carrierFFT", new float[outLen]},
+      {"infoFFT", new float[outLen]}
     });
     debugSignalsForChannels[ch] = debugSignals;
     float *signal = (*debugSignals)[string("carrierHann")];
