@@ -119,15 +119,18 @@ static void vocodeBlock(
   saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, outLen, "carrierFFTSqAdded", debugSignals);
   saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, outLen, "infoFFTSqAdded", debugSignals);
 
-  FFTArray carrierFFTAddedRSqRt;
+  FFTArray carrierFFTSqAddedRSqrt;
   FFTArray infoFFTSqAddedSqrt;
-  rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTAddedRSqRt.data());
+  rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
+
+  saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, outLen, "carrierFFTSqAddedRSqrt", debugSignals);
+  saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, outLen, "infoFFTSqAddedSqrt", debugSignals);
 
   FFTArray combinedAmpFactors;
   FloatVectorOperations::multiply(
     combinedAmpFactors.data(), // dest
-    carrierFFTAddedRSqRt.data(),
+    carrierFFTSqAddedRSqrt.data(),
     infoFFTSqAddedSqrt.data(),
     fftSize);
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());

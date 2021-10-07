@@ -82,10 +82,11 @@ int main (int argc, char* argv[])
       {"carrierFFT", new float[outLen]},
       {"infoFFT", new float[outLen]},
       {"carrierFFTSqAdded", new float[outLen]},
-      {"infoFFTSqAdded", new float[outLen]}
+      {"infoFFTSqAdded", new float[outLen]},
+      {"carrierFFTSqAddedRSqrt", new float[outLen]},
+      {"infoFFTSqAddedSqrt", new float[outLen]}
     });
     debugSignalsForChannels[ch] = debugSignals;
-    float *signal = (*debugSignals)[string("carrierHann")];
   };
 
   DebugSignals *debugSignals = debugSignalsForChannels[0];
