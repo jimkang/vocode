@@ -9,13 +9,12 @@ using namespace std;
 
 static bool verbose = true;
 
-typedef array<float, fftSize * 2> ComplexFFTArray;
+typedef array<dsp::Complex<float>, fftSize> ComplexFFTArray;
 typedef array<float, fftSize> FFTArray;
 typedef map<string, float *> DebugSignals;
 typedef array<DebugSignals *, 2> DebugSignalsForChannels;
 
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData);
-static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes, bool addTinyNumber);
 static void printSamples(const char *arrayName, float *array, int arraySize);
 static void printRange(const char *arrayName, int lowerBound, int upperBound, const float *array);
 static void getReal(ComplexFFTArray& fftData, FFTArray& realVals);
@@ -23,67 +22,39 @@ static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals);
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData);
 static float reciprocalSqRt(float bin);
 
-static void applyHannWindow(ComplexFFTArray& fftData) {
-  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
-  window.multiplyWithWindowingTable(fftData.data(), fftSize);
-}
 
 // fftData will have real and imaginary parts interleaved.
 static void getFFT(ComplexFFTArray& fftData) {
   dsp::FFT fft(fftPowerOf2);
-  fft.performRealOnlyForwardTransform(fftData.data(), true);
+  fft.performRealOnlyForwardTransform(reinterpret_cast<float *>(fftData.data()));
 }
 
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData) {
   zipTogetherComplexArray(realBins, imagBins, ifftData);
   dsp::FFT fft(fftPowerOf2);
-  fft.performRealOnlyInverseTransform(ifftData.data());
-  printSamples("ifftData", ifftData.data(), fftSize);
+  fft.performRealOnlyInverseTransform(reinterpret_cast<float *>(ifftData.data()));
+
+  FFTArray realResult;
+  getReal(ifftData, realResult);
+  printSamples("ifftData", realResult.data(), fftSize);
 
   dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
-  window.multiplyWithWindowingTable(ifftData.data(), fftSize);
+  window.multiplyWithWindowingTable(realResult.data(), fftSize);
 
-  printSamples("ifftData, after windowing", ifftData.data(), fftSize);
+  printSamples("ifftData, after windowing", realResult.data(), fftSize);
 }
 
-// Assumes fftData will have real and imaginary parts interleaved.
-static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes, bool addTinyNumber) {
-  for (int i = 0; i < fftSize * 2; i += 2) {
-    const float real = fftData[i];
-    const float imag = fftData[i + 1];
-    const float realSquared = real * real;
-    const float imagSquared = imag * imag;
-    float sum = realSquared + imagSquared;
-    // I don't know that adding this tiny number
-    // matters.
-    if (addTinyNumber) {
-      sum += tinyNumber;
-    }
-    binMagnitudes[i/2] = reciprocalSqRt(sum);
-
-    if (verbose && i >= 10 && i < 21) {
-      cout << fftData[i] << " realSquared: " << realSquared << fftData[i + 1] << " imagSquared: " << imagSquared << ", magnitude: " << binMagnitudes[i/2] << endl;
-    }
-  }
-}
-
-// Evens are real, odds are imaginary, I hope.
 static void getReal(ComplexFFTArray& fftData, FFTArray& realVals) {
-  for (int i = 0; i < fftSize; ++i) {
-    realVals[i] = fftData[i * 2];
-  }
+  transform(fftData.begin(), fftData.end(), realVals.begin(), [](complex<float> c) -> float { return c.real(); });
 }
 
 static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals) {
-  for (int i = 0; i < fftSize; ++i) {
-    imagVals[i] = fftData[i * 2 + 1];
-  }
+  transform(fftData.begin(), fftData.end(), imagVals.begin(), [](dsp::Complex<float> c) -> float { return c.imag(); });
 }
 
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData) {
   for (int i = 0; i < fftSize; ++i) {
-    fftData[i * 2] = realVals[i];
-    fftData[i * 2 + 1] = imagVals[i];
+    fftData[i] = complex<float>(realVals[i], imagVals[i]);
   }
 }
 
@@ -132,7 +103,7 @@ static void squareSignal(float *array, int size) {
 
 static void addRealAndImag(const ComplexFFTArray& compFFTArray, FFTArray& sumArray) {
   for (int i = 0; i < fftSize; ++i) {
-    sumArray[i] = compFFTArray[i] + compFFTArray[i + fftSize];
+    sumArray[i] = compFFTArray[i].real() + compFFTArray[i].imag();
   }
 }
 

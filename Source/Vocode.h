@@ -18,8 +18,6 @@ static void vocodeBlock(
   float *outPtr,
   int outLen);
 //static void vocodeBlock(const float *carrierPtr, const float *infoPtr, float *outPtr, int outLen);
-static void getReducedCombinedAmpFactors(
-  ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer,
   DebugSignalsForChannels& debugSignalsForChannels,
@@ -88,33 +86,56 @@ static void vocodeBlock(
   float *outPtr,
   int outLen) {
 
+  // Apply Hann window.
+  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+
+  float windowedCarrier[outLen];
+  float windowedInfo[outLen];
+  memcpy(windowedCarrier, carrierPtr, outLen);
+  memcpy(windowedInfo, infoPtr, outLen);
+  window.multiplyWithWindowingTable(windowedCarrier, outLen);
+  window.multiplyWithWindowingTable(windowedInfo, outLen);
+
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
   ComplexFFTArray infoFFTData;
 
   for (int sampleIndex = 0; sampleIndex < outLen; ++sampleIndex) {
-    carrierFFTData[sampleIndex] = carrierPtr[sampleIndex];
-    infoFFTData[sampleIndex] = infoPtr[sampleIndex];
+    carrierFFTData[sampleIndex] = windowedCarrier[sampleIndex];
+    infoFFTData[sampleIndex] = windowedInfo[sampleIndex];
   }
 
-  applyHannWindow(carrierFFTData);
-  applyHannWindow(infoFFTData);
-
-  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
-  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
+  // TODO: Save to csv instead of wav file.
+  //saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
+  //saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
 
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
 
-  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
-  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);
+  //saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
+  //saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);
 
-  squareSignal(carrierFFTData.data(), fftSize * 2);
-  squareSignal(infoFFTData.data(), fftSize * 2);
+  FFTArray carrierFFTReal;
+  FFTArray carrierFFTImag;
+  getReal(carrierFFTData, carrierFFTReal);
+  getImaginary(carrierFFTData, carrierFFTImag);
+
+  FFTArray infoFFTReal;
+  FFTArray infoFFTImag;
+  getReal(infoFFTData, infoFFTReal);
+  getImaginary(infoFFTData, infoFFTImag);
+
+  squareSignal(carrierFFTReal.data(), fftSize);
+  squareSignal(carrierFFTImag.data(), fftSize);
+  squareSignal(infoFFTReal.data(), fftSize);
+  squareSignal(infoFFTImag.data(), fftSize);
+
+  // Consider just making these unwrapped float[]s.
   FFTArray carrierFFTSqAdded;
   FFTArray infoFFTSqAdded;
-  addRealAndImag(carrierFFTData, carrierFFTSqAdded);
-  addRealAndImag(infoFFTData, infoFFTSqAdded);
+
+  FloatVectorOperations::add(carrierFFTSqAdded.data(), carrierFFTReal.data(), carrierFFTImag.data(), fftSize);
+  FloatVectorOperations::add(infoFFTSqAdded.data(), infoFFTReal.data(), infoFFTImag.data(), fftSize);
 
   saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, outLen, "carrierFFTSqAdded", debugSignals);
   saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, outLen, "infoFFTSqAdded", debugSignals);
@@ -169,7 +190,8 @@ static void vocodeBlock(
 
   // Copy the results to the channel.
   const int sampleLimit = outLen > fftSize ? fftSize : outLen;
+  float *ifftDataRaw = (float *)ifftData.data();
   for (int i = 0; i < sampleLimit; ++i) {
-    outPtr[i] = ifftData[i];
+    outPtr[i] = ifftDataRaw[i];
   }
 }

@@ -63,8 +63,9 @@ static void reconstructBlock(const float *carrierPtr, float *outPtr, int outLen)
   // Copy the results to the channel.
   const int sampleLimit = outLen > fftSize ? fftSize : outLen;
   cout << "outLen: " << outLen << ", fftSize: " << fftSize << endl;
+  float *ifftDataRaw = (float *)ifftData.data();
   for (int i = 0; i < sampleLimit; ++i) {
-    outPtr[i] = ifftData[i];
+    outPtr[i] = ifftDataRaw[i];
     //outPtr[i] = carrierFFTData[i];
   }
 }
