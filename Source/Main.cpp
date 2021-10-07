@@ -80,7 +80,9 @@ int main (int argc, char* argv[])
       {"carrierHann", new float[outLen]},
       {"infoHann", new float[outLen]},
       {"carrierFFT", new float[outLen]},
-      {"infoFFT", new float[outLen]}
+      {"infoFFT", new float[outLen]},
+      {"carrierFFTSqAdded", new float[outLen]},
+      {"infoFFTSqAdded", new float[outLen]}
     });
     debugSignalsForChannels[ch] = debugSignals;
     float *signal = (*debugSignals)[string("carrierHann")];

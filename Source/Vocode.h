@@ -109,19 +109,34 @@ static void vocodeBlock(
   saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
   saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);
 
-  FFTArray reducedAmpFactors;
-  getReducedCombinedAmpFactors(carrierFFTData, infoFFTData, reducedAmpFactors);
+  squareSignal(carrierFFTData.data(), fftSize * 2);
+  squareSignal(infoFFTData.data(), fftSize * 2);
+  FFTArray carrierFFTSqAdded;
+  FFTArray infoFFTSqAdded;
+  addRealAndImag(carrierFFTData, carrierFFTSqAdded);
+  addRealAndImag(infoFFTData, infoFFTSqAdded);
 
-  // Combine the imaginary components of the carrier fft
-  // with the reduced combined amps.
-  FFTArray carrierImagBins;
-  getImaginary(carrierFFTData, carrierImagBins);
-  FFTArray carrierImagWithReducedAmpFactors;
+  saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, outLen, "carrierFFTSqAdded", debugSignals);
+  saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, outLen, "infoFFTSqAdded", debugSignals);
+
+  FFTArray carrierFFTAddedRSqRt;
+  FFTArray infoFFTSqAddedSqrt;
+  rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTAddedRSqRt.data());
+  sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
+
+  FFTArray combinedAmpFactors;
   FloatVectorOperations::multiply(
-    carrierImagWithReducedAmpFactors.data(),
-    carrierImagBins.data(),
-    reducedAmpFactors.data(),
+    combinedAmpFactors.data(), // dest
+    carrierFFTAddedRSqRt.data(),
+    infoFFTSqAddedSqrt.data(),
     fftSize);
+  printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
+
+  // Turn down the combined amps.
+  FFTArray reducedAmpFactors;
+  FloatVectorOperations::multiply(
+    reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
+  printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
 
   // Multiply the real components of the carrier fft by the reduced
   // combined amps.
@@ -134,6 +149,17 @@ static void vocodeBlock(
     reducedAmpFactors.data(),
     fftSize);
 
+  // Multiply the imaginary components of the carrier fft by the reduced
+  // combined amps.
+  FFTArray carrierImagBins;
+  getImaginary(carrierFFTData, carrierImagBins);
+  FFTArray carrierImagWithReducedAmpFactors;
+  FloatVectorOperations::multiply(
+    carrierImagWithReducedAmpFactors.data(),
+    carrierImagBins.data(),
+    reducedAmpFactors.data(),
+    fftSize);
+
   ComplexFFTArray ifftData;
   getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
   //getIFFT(carrierRealBins, carrierImagBins, ifftData);
@@ -143,36 +169,4 @@ static void vocodeBlock(
   for (int i = 0; i < sampleLimit; ++i) {
     outPtr[i] = ifftData[i];
   }
-}
-
-static void getReducedCombinedAmpFactors(
-  ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors) {
-
-  // Get the magnitudes of the FFT bins.
-  FFTArray carrierAmpFactors;
-  FFTArray infoAmpFactors;
-  getMagnitudes(carrierFFTData, carrierAmpFactors, false);
-  getMagnitudes(infoFFTData, infoAmpFactors, false);
-
-  // Clamp the carrier magnitudes. to a max value.
-  const auto clamp = [](float val){ return val > maxCarrierMag ? maxCarrierMag : val; };
-  FFTArray carrierAmpFactorsClamped;
-  transform(carrierAmpFactors.begin(), carrierAmpFactors.end(),
-    carrierAmpFactorsClamped.begin(), clamp);
-  printRange("carrierAmpFactorsClamped", 5, 15, carrierAmpFactorsClamped.data());
-
-  // Multiply the clamped carrier amps by the info carrier amps.
-  FFTArray combinedAmpFactors;
-  FloatVectorOperations::multiply(
-    combinedAmpFactors.data(),
-    carrierAmpFactorsClamped.data(),
-    //carrierAmpFactors.data(),
-    infoAmpFactors.data(),
-    fftSize);
-  printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
-
-  // Reduce the combined amps.
-  FloatVectorOperations::multiply(
-    reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
-  printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
 }

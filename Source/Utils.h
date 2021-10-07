@@ -111,6 +111,31 @@ static float reciprocalSqRt(float bin) {
   return 1.0 / sqrt(bin);
 }
 
+static void rSqrtSignal(const float *array, int size, float *outArray) {
+  for (int i = 0; i < size; ++i) {
+    outArray[i] = reciprocalSqRt(array[i]);
+  }
+}
+
+static void sqrtSignal(const float *array, int size, float *outArray) {
+  for (int i = 0; i < size; ++i) {
+    outArray[i] = sqrt(array[i]);
+  }
+}
+
+// In-place
+static void squareSignal(float *array, int size) {
+  for (int i = 0; i < size; ++i) {
+    array[i] *= array[i];
+  }
+}
+
+static void addRealAndImag(const ComplexFFTArray& compFFTArray, FFTArray& sumArray) {
+  for (int i = 0; i < fftSize; ++i) {
+    sumArray[i] = compFFTArray[i] + compFFTArray[i + fftSize];
+  }
+}
+
 static void saveArrayToDebug(
   const float *array,
   int writeStart,
