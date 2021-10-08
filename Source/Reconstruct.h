@@ -44,6 +44,9 @@ static void reconstructBlock(const float *carrierPtr, float *outPtr, int outLen)
     carrierFFTData[sampleIndex] = carrierPtr[sampleIndex];
   }
 
+  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+  window.multiplyWithWindowingTable(carrierFFTData.data(), fftSize);
+
   getFFT(carrierFFTData);
 
   FFTArray carrierRealBins;

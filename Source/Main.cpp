@@ -91,8 +91,9 @@ int main (int argc, char* argv[])
 
   DebugSignals *debugSignals = debugSignalsForChannels[0];
   float *signal = (*debugSignals)["carrierHann"];
-  //reconstruct(carrierBuffer, outBuffer);
-  vocode(carrierBuffer, infoBuffer, debugSignalsForChannels, outBuffer);
+
+  reconstruct(carrierBuffer, outBuffer);
+  //vocode(carrierBuffer, infoBuffer, debugSignalsForChannels, outBuffer);
 
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
