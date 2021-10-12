@@ -12,3 +12,6 @@ const float smallifyFactor = 0.00065;
 const float tinyNumber = pow(10, -20);
 
 const int overlapSize = pow(2, fftPowerOf2 - 1);
+
+// TODO: Make this an arg.
+const char *baseLogPath = "../../../logs/";

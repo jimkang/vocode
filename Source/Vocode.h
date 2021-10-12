@@ -2,6 +2,7 @@
 #include <math.h>
 #include "Utils.h"
 #include "Consts.h"
+#include "LogSignal.h"
 
 using namespace juce;
 using namespace std;
@@ -101,6 +102,8 @@ static void vocodeBlock(
   applyHannWindow(infoFFTData);
 
   saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
+  // TODO: Include channel in filename.
+  logSignal("carrierHann.txt", outLen, carrierFFTData.data());
   saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
 
   getFFT(carrierFFTData);
