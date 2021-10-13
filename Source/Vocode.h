@@ -98,6 +98,9 @@ static void vocodeBlock(
     infoFFTData[sampleIndex] = infoPtr[sampleIndex];
   }
 
+  logSignal("carrier-raw.txt", outLen, carrierPtr);
+  logSignal("carrier.txt", outLen, carrierFFTData.data());
+
   applyHannWindow(carrierFFTData);
   applyHannWindow(infoFFTData);
 
