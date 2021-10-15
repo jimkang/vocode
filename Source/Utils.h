@@ -69,21 +69,34 @@ static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes, boo
 
 // Evens are real, odds are imaginary, I hope.
 static void getReal(ComplexFFTArray& fftData, FFTArray& realVals) {
+  //for (int i = 0; i < fftSize; ++i) {
+    //realVals[i] = fftData[i * 2];
+  //}
+  dsp::Complex<float> *complexFFTData = reinterpret_cast<dsp::Complex<float> *>(fftData.data());
   for (int i = 0; i < fftSize; ++i) {
-    realVals[i] = fftData[i * 2];
+    dsp::Complex<float> comp = complexFFTData[i];
+    realVals[i] = comp.real();
   }
 }
 
 static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals) {
+  //for (int i = 0; i < fftSize; ++i) {
+    //imagVals[i] = fftData[i * 2 + 1];
+  //}
+  dsp::Complex<float> *complexFFTData = reinterpret_cast<dsp::Complex<float> *>(fftData.data());
   for (int i = 0; i < fftSize; ++i) {
-    imagVals[i] = fftData[i * 2 + 1];
+    imagVals[i] = complexFFTData[i].imag();
   }
 }
 
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData) {
+  //for (int i = 0; i < fftSize; ++i) {
+    //fftData[i * 2] = realVals[i];
+    //fftData[i * 2 + 1] = imagVals[i];
+  //}
+  dsp::Complex<float> *complexFFTData = reinterpret_cast<dsp::Complex<float> *>(fftData.data());
   for (int i = 0; i < fftSize; ++i) {
-    fftData[i * 2] = realVals[i];
-    fftData[i * 2 + 1] = imagVals[i];
+    complexFFTData[i] = complex<float>(realVals[i], imagVals[i]);
   }
 }
 
@@ -109,6 +122,31 @@ static void printRange(const char *arrayName, int lowerBound, int upperBound, co
 
 static float reciprocalSqRt(float bin) {
   return 1.0 / sqrt(bin);
+}
+
+static void rSqrtSignal(const float *array, int size, float *outArray) {
+  for (int i = 0; i < size; ++i) {
+    outArray[i] = reciprocalSqRt(array[i]);
+  }
+}
+
+static void sqrtSignal(const float *array, int size, float *outArray) {
+  for (int i = 0; i < size; ++i) {
+    outArray[i] = sqrt(array[i]);
+  }
+}
+
+// In-place
+static void squareSignal(float *array, int size) {
+  for (int i = 0; i < size; ++i) {
+    array[i] *= array[i];
+  }
+}
+
+static void addRealAndImag(const ComplexFFTArray& compFFTArray, FFTArray& sumArray) {
+  for (int i = 0; i < fftSize; ++i) {
+    sumArray[i] = compFFTArray[i] + compFFTArray[i + fftSize];
+  }
 }
 
 static void saveArrayToDebug(
