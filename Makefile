@@ -7,4 +7,4 @@ debug: clean-logs
 	cd Builds/LinuxMakefile/build && gdb --args vocode ../../../example-media/donut.wav ../../../example-media/talking.wav ../../../example-media/result.wav
 
 clean-logs:
-	rm logs/*
+	rm logs/* || echo "Logs clean already."

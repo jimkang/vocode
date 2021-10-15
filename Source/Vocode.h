@@ -7,18 +7,9 @@
 using namespace juce;
 using namespace std;
 
-static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DebugSignals& debugSignals, float *outPtr);
-//static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, float *outPtr);
-static void vocodeBlock(
-  const float *carrierPtr,
-  const float *infoPtr,
-  // offsetOfBlock is how far into the whole signal that this
-  // particular block starts.
-  int offsetOfBlock,
-  DebugSignals& debugSignals,
-  float *outPtr,
-  int outLen);
-//static void vocodeBlock(const float *carrierPtr, const float *infoPtr, float *outPtr, int outLen);
+static void vocodeChannel(const vector<float>& carrierSamples, const vector<float>& infoSamples, vector<float>& outSamples, const DebugSignals& debugSignals);
+static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<float>& infoBlockSamples, vector<float>& outBlockSamples, const DebugSignals& debugSignals);
+
 static void getReducedCombinedAmpFactors(
   ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
@@ -32,88 +23,103 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
     channelCount = infoBufferChannelCount;
   }
   for (int ch = 0; ch < channelCount; ++ch) {
-    const float *carrierPtr = carrierBuffer.getReadPointer(ch);
-    const float *infoPtr = infoBuffer.getReadPointer(ch);
-    float *outPtr = outBuffer.getWritePointer(ch);
+    const int maxSamples = outBuffer.getNumSamples();
+    // Copy the arrays into vectors.
+    vector<float> carrierSamples(carrierBuffer.getReadPointer(ch), carrierBuffer.getReadPointer(ch) + maxSamples);
+    vector<float> infoSamples(infoBuffer.getReadPointer(ch), infoBuffer.getReadPointer(ch) + maxSamples);
+    vector<float> outSamples(maxSamples);
 
-    vocodeChannel(carrierPtr, infoPtr, outBuffer.getNumSamples(), *debugSignalsForChannels[ch], outPtr);
+    //for (int i = 0; i < outSamples.size(); ++i) {
+      //outSamples[i] = carrierSamples[i];
+    //}
+
+    vocodeChannel(carrierSamples, infoSamples, outSamples, *debugSignalsForChannels[ch]);
+
+    //for (auto it = outSamples.begin(); it != outSamples.end(); ++it) {
+      //if (*it > 0.01) {
+        //cout << "hey";
+      //}
+    //}
+    float *outWritePtr = outBuffer.getWritePointer(ch);
+    for (int i = 0; i < outSamples.size(); ++i) {
+      outWritePtr[i] = outSamples[i];
+      if (outSamples[i] > 0) {
+        int x = 2;
+      }
+    }
   }
 }
 
-static void vocodeChannel(const float *carrierPtr, const float *infoPtr, int outLen, DebugSignals& debugSignals, float *outPtr) {
-  // Some dummy buffer writing.
-  //for (int i = 0; i < outLen; ++i) {
-    //outPtr[i] = i % 2 == 0 ? carrierPtr[i] : infoPtr[i];
+static void vocodeChannel(const vector<float>& carrierSamples, const vector<float>& infoSamples, vector<float>& outSamples, const DebugSignals& debugSignals) {
+  const int maxBlocks = outSamples.size()/fftSize;
+  // Leave out the last partial block for now.
+
+  auto carrierStart = carrierSamples.begin();
+  auto infoStart = infoSamples.begin();
+  auto outStart = outSamples.begin();
+
+  //for (int i = 0; i < outSamples.size(); ++i) {
+    //outSamples[i] = carrierSamples[i];
   //}
+  //return;
 
-  // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize - overlapSize)) {
-    int end = i + fftSize;
-    if (end > outLen) {
-      end = outLen;
-    }
-    FFTArray carrierBlockArray;
-    FFTArray infoBlockArray;
-    FFTArray outBlockArray;
+  for (int blockIndex = 0; blockIndex < maxBlocks; ++blockIndex) {
+    cout << "vocoding block  " << blockIndex << endl;
 
-    copy(carrierPtr + i, carrierPtr + i + fftSize, carrierBlockArray.begin());
-    copy(infoPtr + i, infoPtr + i + fftSize, infoBlockArray.begin());
-
-    //printRange("carrierPtr", i, i + fftSize, carrierPtr);
-    //printRange("carrierBlockArray", 0, fftSize, carrierBlockArray.data());
-
-    cout << "vocoding block starting at " << i << endl;
+    auto carrierNext = carrierStart + blockSize;
+    auto infoNext = infoStart + blockSize;
+    auto outNext = outStart + blockSize;
+    vector<float> outBlockSamples(outStart, outNext);
 
     vocodeBlock(
-      carrierBlockArray.data(),
-      infoBlockArray.data(),
-      i,
-      debugSignals,
-      outBlockArray.data(),
-      end - i);
+      vector<float>(carrierStart, carrierNext),
+      vector<float>(infoStart, infoNext),
+      outBlockSamples,
+      debugSignals
+    );
 
-    // TODO: Have vocodeBlock work directly on outPtr.
-    for (int j = i; j < end; ++j) {
-      outPtr[j] += outBlockArray[j - i];
+    // TODO: Cut down on the copying.
+    int outBlockSampleIndex = 0;
+    for (auto it = outStart; it!= outNext; ++it) {
+      *it = outBlockSamples[outBlockSampleIndex];
+      ++outBlockSampleIndex;
     }
+
+    carrierStart = carrierNext;
+    infoStart = infoNext;
+    outStart = outNext;
   }
 }
 
-static void vocodeBlock(
-  const float *carrierPtr,
-  const float *infoPtr,
-  // offsetOfBlock is how far into the whole signal that this
-  // particular block starts.
-  int offsetOfBlock,
-  DebugSignals& debugSignals,
-  float *outPtr,
-  int outLen) {
+static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<float>& infoBlockSamples, vector<float>& outBlockSamples, const DebugSignals& debugSignals) {
+
+  //auto carrierSample = carrierBlockSamples.begin();
+  //auto outSample = outBlockSamples.begin();
+  //for (int i = 0; i < outBlockSamples.size(); ++i) {
+    //outBlockSamples[i] = carrierSample[i];
+  //}
+  //return;
 
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
   ComplexFFTArray infoFFTData;
 
-  for (int sampleIndex = 0; sampleIndex < outLen; ++sampleIndex) {
-    carrierFFTData[sampleIndex] = carrierPtr[sampleIndex];
-    infoFFTData[sampleIndex] = infoPtr[sampleIndex];
+  for (int i = 0; i < carrierBlockSamples.size(); ++i) {
+    carrierFFTData[i] = carrierBlockSamples[i];
+    infoFFTData[i] = infoBlockSamples[i];
   }
 
-  logSignal("carrier-raw.txt", outLen, carrierPtr);
-  logSignal("carrier.txt", outLen, carrierFFTData.data());
+  logSignal("carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+  logSignal("carrier.txt", fftSize, carrierFFTData.data());
 
   applyHannWindow(carrierFFTData);
   applyHannWindow(infoFFTData);
 
-  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierHann", debugSignals);
   // TODO: Include channel in filename.
-  logSignal("carrierHann.txt", outLen, carrierFFTData.data());
-  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoHann", debugSignals);
+  logSignal("carrierHann.txt", fftSize, carrierFFTData.data());
 
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
-
-  saveArrayToDebug(carrierFFTData.data(), offsetOfBlock, outLen, "carrierFFT", debugSignals);
-  saveArrayToDebug(infoFFTData.data(), offsetOfBlock, outLen, "infoFFT", debugSignals);
 
   squareSignal(carrierFFTData.data(), fftSize * 2);
   squareSignal(infoFFTData.data(), fftSize * 2);
@@ -122,16 +128,16 @@ static void vocodeBlock(
   addRealAndImag(carrierFFTData, carrierFFTSqAdded);
   addRealAndImag(infoFFTData, infoFFTSqAdded);
 
-  saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, outLen, "carrierFFTSqAdded", debugSignals);
-  saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, outLen, "infoFFTSqAdded", debugSignals);
+  //saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, maxSamples, "carrierFFTSqAdded", debugSignals);
+  //saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, maxSamples, "infoFFTSqAdded", debugSignals);
 
   FFTArray carrierFFTSqAddedRSqrt;
   FFTArray infoFFTSqAddedSqrt;
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
 
-  saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, outLen, "carrierFFTSqAddedRSqrt", debugSignals);
-  saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, outLen, "infoFFTSqAddedSqrt", debugSignals);
+  //saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, maxSamples, "carrierFFTSqAddedRSqrt", debugSignals);
+  //saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, maxSamples, "infoFFTSqAddedSqrt", debugSignals);
 
   FFTArray combinedAmpFactors;
   FloatVectorOperations::multiply(
@@ -174,8 +180,7 @@ static void vocodeBlock(
   //getIFFT(carrierRealBins, carrierImagBins, ifftData);
 
   // Copy the results to the channel.
-  const int sampleLimit = outLen > fftSize ? fftSize : outLen;
-  for (int i = 0; i < sampleLimit; ++i) {
-    outPtr[i] = ifftData[i];
+  for (int i = 0; i < fftSize; ++i) {
+    outBlockSamples[i] = ifftData[i];
   }
 }
