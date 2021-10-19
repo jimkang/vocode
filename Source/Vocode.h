@@ -121,6 +121,8 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
 
+  logSignal("carrierFFT.txt", fftSize, carrierFFTData.data());
+
   squareSignal(carrierFFTData.data(), fftSize * 2);
   squareSignal(infoFFTData.data(), fftSize * 2);
   FFTArray carrierFFTSqAdded;

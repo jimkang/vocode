@@ -21,15 +21,13 @@ import { select } from 'd3-selection';
       .attr('class', 'container')
       .attr('id', (a, i) => 'container-' + i);
     newContainers.append('h3');
+    newContainers.append('h4').classed('range-label', true);
 
-    newContainers
-      .merge(containers)
-      .each(callGraph)
-      .select('h3')
-      .text((na) => na.name);
+    newContainers.merge(containers).each(fillInGraphAndLabels);
   }
 
-  function callGraph({ array }, i) {
+  function fillInGraphAndLabels({ array }, i) {
+    var yBounds = getYBounds(array);
     graphArray({
       id: i,
       array,
@@ -37,7 +35,13 @@ import { select } from 'd3-selection';
       onError: handleError,
       fitToParentWidth: true,
       zoomable: true,
+      yBounds,
     });
+    var containerSel = select(this);
+    containerSel.select('h3').text((na) => na.name);
+    containerSel
+      .select('.range-label')
+      .text(`Range: ${yBounds[0]} to ${yBounds[1]}`);
   }
 
   function renderSource() {
@@ -49,6 +53,16 @@ import { select } from 'd3-selection';
     }
   }
 })();
+
+function getYBounds(array) {
+  const biggestAbs = array.reduce(getBiggerAbs, 1.0);
+  return [-biggestAbs, biggestAbs];
+}
+
+function getBiggerAbs(a, b) {
+  const absB = Math.abs(b);
+  return a > absB ? a : absB;
+}
 
 function reportTopLevelError(msg, url, lineNo, columnNo, error) {
   handleError(error);

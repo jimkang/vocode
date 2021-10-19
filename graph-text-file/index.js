@@ -3,6 +3,7 @@ import { scaleLinear } from 'd3-scale';
 import curry from 'lodash.curry';
 import { zoom as Zoom } from 'd3-zoom';
 
+// Returns yBounds in object.
 export async function graphArray({
   id,
   array,
@@ -12,6 +13,7 @@ export async function graphArray({
   waveformHeight = 300,
   fitToParentWidth = false,
   zoomable = false,
+  yBounds
 }) {
   var width = waveformWidth;
   if (fitToParentWidth) {
@@ -19,11 +21,8 @@ export async function graphArray({
   }
 
   var containerSel = select(containerSelector);
-
   containerSel.selectAll('canvas').style('display', 'none');
-
   renderArray();
-
   containerSel.classed('hidden', false);
 
   function initCanvas(canvasClass, width, sel) {
@@ -80,8 +79,7 @@ export async function graphArray({
       }
     }
 
-    function drawWaveform({ array, color,transform 
-    }) {
+    function drawWaveform({ array, color, transform }) {
       canvasCtx.clearRect(0, 0, width, height);
       canvasCtx.fillRect(0, 0, width, height);
 
@@ -90,7 +88,7 @@ export async function graphArray({
       // +y is down! If we want positive values to be
       // higher than negative ones, we must flip their
       // signs.
-      var y = scaleLinear().domain([-1.0, 1.0]).range([height, 0]);
+      var y = scaleLinear().domain(yBounds).range([height, 0]);
       canvasCtx.beginPath();
       canvasCtx.strokeStyle = color;
       if (transform) {
