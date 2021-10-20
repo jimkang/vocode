@@ -128,6 +128,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   FFTArray carrierFFTSqAdded;
   FFTArray infoFFTSqAdded;
   addRealAndImag(carrierFFTData, carrierFFTSqAdded);
+  logSignal("carrier-rfft-added.txt", fftSize, carrierFFTSqAdded.data());
   addRealAndImag(infoFFTData, infoFFTSqAdded);
 
   //saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, maxSamples, "carrierFFTSqAdded", debugSignals);
