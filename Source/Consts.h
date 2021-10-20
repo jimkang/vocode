@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-const int fftPowerOf2 = 14;//10;
+const int fftPowerOf2 = 10;
 const int fftSize = 1 << fftPowerOf2;
 const int blockSize = fftSize;
 const int blockSizeInBytes = blockSize * sizeof(float);
