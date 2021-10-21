@@ -13,8 +13,28 @@ export async function graphArray({
   waveformHeight = 300,
   fitToParentWidth = false,
   zoomable = false,
-  yBounds
+  yBounds,
+  renderInfinities = true
 }) {
+  var nonInfArray = array;
+  var infArray = [];
+  if (renderInfinities) {
+    nonInfArray = [];
+    for (let i = 0; i < array.length; ++i) {
+      const val = array[i];
+      if (val === Infinity) {
+        infArray[i] = yBounds[1];
+        nonInfArray[i] = 0;
+      } else if (val === -Infinity) {
+        infArray[i] = yBounds[0];
+        nonInfArray[i] = 0;
+      } else {
+        infArray[i] = 0;
+        nonInfArray[i] = val;
+      }
+    }
+  }      
+
   var width = waveformWidth;
   if (fitToParentWidth) {
     width = document.body.getBoundingClientRect().width;
@@ -55,8 +75,15 @@ export async function graphArray({
     function draw() {
       drawWaveform({
         canvasSel,
-        array,
+        array: nonInfArray,
         color,
+        transform: currentTransform
+      });
+      drawWaveform({
+        clearBeforeDraw: false,
+        canvasSel,
+        array: infArray,
+        color: 'hsla(0, 0%, 100%, 0.2)',
         transform: currentTransform
       });
     }
@@ -79,9 +106,11 @@ export async function graphArray({
       }
     }
 
-    function drawWaveform({ array, color, transform }) {
-      canvasCtx.clearRect(0, 0, width, height);
-      canvasCtx.fillRect(0, 0, width, height);
+    function drawWaveform({ array, color, transform, clearBeforeDraw = true }) {
+      if (clearBeforeDraw) {
+        canvasCtx.clearRect(0, 0, width, height);
+        canvasCtx.fillRect(0, 0, width, height);
+      }
 
       var x = scaleLinear().domain([0, array.length]).range([0, width]);
       // In canvas, and GUIs in general, remember:

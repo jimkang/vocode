@@ -59,8 +59,12 @@ function getYBounds(array) {
   return [-biggestAbs, biggestAbs];
 }
 
+// Don't count infinity as a possible bound.
 function getBiggerAbs(a, b) {
   const absB = Math.abs(b);
+  if (b === Infinity) {
+    return a;
+  }
   return a > absB ? a : absB;
 }
 

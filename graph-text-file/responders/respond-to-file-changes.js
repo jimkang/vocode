@@ -7,8 +7,18 @@ export function respondToFileChanges({ files, onArrays }) {
   function parse(texts) {
     var arrays = texts.map((text, i) => ({
       name: files[i].name,
-      array: text.split('\n').map((s) => +s),
+      array: text.split('\n').map(stringToNumber),
     }));
     onArrays(arrays);
   }
+}
+
+function stringToNumber(s) {
+  if (s === 'inf') {
+    return Infinity;
+  }
+  if (s === '-inf') {
+    return -Infinity;
+  }
+  return +s;
 }
