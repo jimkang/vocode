@@ -90,7 +90,7 @@ export async function graphArray({
 
     function setUpZoom(canvas, draw, initialTransform = undefined) {
       var zoom = Zoom()
-        .scaleExtent([1, 8])
+        .scaleExtent([1, 256])
         .on('zoom', zoomed);
 
       var canvasSel = select(canvas);

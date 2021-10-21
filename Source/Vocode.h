@@ -150,6 +150,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     infoFFTSqAddedSqrt.data(),
     fftSize);
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
+  logSignal("carrier-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
 
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
