@@ -159,14 +159,19 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
   printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
 
-  // Multiply the real components of the carrier fft by the reduced
+  // Multiply the reduced real components of the carrier fft by the reduced
   // combined amps.
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
+  FFTArray reducedCarrierReals;
+  FloatVectorOperations::multiply(
+    reducedCarrierReals.data(), carrierRealBins.data(), smallifyFactor, fftSize);
+  logSignal("carrier-fft-real-reduced.txt", fftSize, reducedCarrierReals.data());
+
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
     carrierRealWithReducedAmpFactors.data(),
-    carrierRealBins.data(),
+    reducedCarrierReals.data(),
     reducedAmpFactors.data(),
     fftSize);
 
