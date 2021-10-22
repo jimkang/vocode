@@ -185,6 +185,8 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     carrierImagBins.data(),
     reducedAmpFactors.data(),
     fftSize);
+  // Why are there no negatives in this result?
+  logSignal("carrier-fft-imag-x-reduced-amp-factors.txt", fftSize, carrierImagWithReducedAmpFactors.data());
 
   ComplexFFTArray ifftData;
   getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
