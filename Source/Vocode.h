@@ -139,6 +139,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
   logSignal("carrierRSqrt.txt", fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
+  logSignal("infoSqrt.txt", fftSize, infoFFTSqAddedSqrt.data());
 
   //saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, maxSamples, "carrierFFTSqAddedRSqrt", debugSignals);
   //saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, maxSamples, "infoFFTSqAddedSqrt", debugSignals);
