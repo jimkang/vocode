@@ -126,13 +126,23 @@ static float reciprocalSqRt(float bin) {
 
 static void rSqrtSignal(const float *array, int size, float *outArray) {
   for (int i = 0; i < size; ++i) {
-    outArray[i] = reciprocalSqRt(array[i]);
+    float val = array[i];
+    if (val == 0) {
+      val = tinyNumber;
+    }
+    outArray[i] = reciprocalSqRt(val);
   }
 }
 
 static void sqrtSignal(const float *array, int size, float *outArray) {
   for (int i = 0; i < size; ++i) {
-    outArray[i] = sqrt(array[i]);
+    // TODO: Move this out of here and just add
+    // it to the incoming signal ahead of time.
+    float val = array[i];
+    if (val == 0) {
+      val = tinyNumber;
+    }
+    outArray[i] = sqrt(val);
   }
 }
 
