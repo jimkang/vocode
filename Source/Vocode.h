@@ -109,26 +109,26 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     infoFFTData[i] = infoBlockSamples[i];
   }
 
-  logSignal("carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
-  logSignal("carrier.txt", fftSize, carrierFFTData.data());
+  logSignal("010-carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+  logSignal("020-carrier.txt", fftSize, carrierFFTData.data());
 
   applyHannWindow(carrierFFTData);
   applyHannWindow(infoFFTData);
 
   // TODO: Include channel in filename.
-  logSignal("carrierHann.txt", fftSize, carrierFFTData.data());
+  logSignal("030-carrierHann.txt", fftSize, carrierFFTData.data());
 
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
 
-  logSignal("carrierFFT.txt", fftSize, carrierFFTData.data());
+  logSignal("040-carrierFFT.txt", fftSize, carrierFFTData.data());
 
   squareSignal(carrierFFTData.data(), fftSize * 2);
   squareSignal(infoFFTData.data(), fftSize * 2);
   FFTArray carrierFFTSqAdded;
   FFTArray infoFFTSqAdded;
   addRealAndImag(carrierFFTData, carrierFFTSqAdded);
-  logSignal("carrier-rfft-added.txt", fftSize, carrierFFTSqAdded.data());
+  logSignal("050-carrier-rfft-added.txt", fftSize, carrierFFTSqAdded.data());
   addRealAndImag(infoFFTData, infoFFTSqAdded);
 
   //saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, maxSamples, "carrierFFTSqAdded", debugSignals);
@@ -137,9 +137,9 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   FFTArray carrierFFTSqAddedRSqrt;
   FFTArray infoFFTSqAddedSqrt;
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
-  logSignal("carrierRSqrt.txt", fftSize, carrierFFTSqAddedRSqrt.data());
+  logSignal("060-carrierRSqrt.txt", fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
-  logSignal("infoSqrt.txt", fftSize, infoFFTSqAddedSqrt.data());
+  logSignal("070-infoSqrt.txt", fftSize, infoFFTSqAddedSqrt.data());
 
   //saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, maxSamples, "carrierFFTSqAddedRSqrt", debugSignals);
   //saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, maxSamples, "infoFFTSqAddedSqrt", debugSignals);
@@ -151,7 +151,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     infoFFTSqAddedSqrt.data(),
     fftSize);
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
-  logSignal("carrier-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
+  logSignal("080-carrier-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
 
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
@@ -171,7 +171,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     reducedAmpFactors.data(),
     fftSize);
   // Why are there no negatives in this result?
-  logSignal("carrier-fft-real-x-reduced-amp-factors.txt", fftSize, carrierRealWithReducedAmpFactors.data());
+  logSignal("100-carrier-fft-real-x-reduced-amp-factors.txt", fftSize, carrierRealWithReducedAmpFactors.data());
 
   // Multiply the imaginary components of the carrier fft by the reduced
   // combined amps.
@@ -184,7 +184,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     reducedAmpFactors.data(),
     fftSize);
   // Why are there no negatives in this result?
-  logSignal("carrier-fft-imag-x-reduced-amp-factors.txt", fftSize, carrierImagWithReducedAmpFactors.data());
+  logSignal("150-carrier-fft-imag-x-reduced-amp-factors.txt", fftSize, carrierImagWithReducedAmpFactors.data());
 
   ComplexFFTArray ifftData;
   getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
