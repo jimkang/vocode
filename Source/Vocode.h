@@ -163,17 +163,15 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   // combined amps.
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
-  FFTArray reducedCarrierReals;
-  FloatVectorOperations::multiply(
-    reducedCarrierReals.data(), carrierRealBins.data(), smallifyFactor, fftSize);
-  logSignal("carrier-fft-real-reduced.txt", fftSize, reducedCarrierReals.data());
 
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
     carrierRealWithReducedAmpFactors.data(),
-    reducedCarrierReals.data(),
+    carrierRealBins.data(),
     reducedAmpFactors.data(),
     fftSize);
+  // Why are there no negatives in this result?
+  logSignal("carrier-fft-real-x-reduced-amp-factors.txt", fftSize, carrierRealWithReducedAmpFactors.data());
 
   // Multiply the imaginary components of the carrier fft by the reduced
   // combined amps.
