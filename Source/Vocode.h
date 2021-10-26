@@ -123,6 +123,17 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
 
   logSignal("040-carrierFFT.txt", fftSize, carrierFFTData.data());
 
+  // Multiply the reduced real components of the carrier fft by the reduced
+  // combined amps.
+  FFTArray carrierRealBins;
+  getReal(carrierFFTData, carrierRealBins);
+  logSignal("045-carrier-fft-real.txt", fftSize, carrierRealBins.data());
+
+  FFTArray carrierImagBins;
+  getImaginary(carrierFFTData, carrierImagBins);
+  logSignal("047-carrier-fft-imag.txt", fftSize, carrierImagBins.data());
+
+  // NOTE: we are altering carrierFFTData.
   squareSignal(carrierFFTData.data(), fftSize * 2);
   squareSignal(infoFFTData.data(), fftSize * 2);
   FFTArray carrierFFTSqAdded;
@@ -159,31 +170,22 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
   printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
 
-  // Multiply the reduced real components of the carrier fft by the reduced
-  // combined amps.
-  FFTArray carrierRealBins;
-  getReal(carrierFFTData, carrierRealBins);
-
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
     carrierRealWithReducedAmpFactors.data(),
     carrierRealBins.data(),
     reducedAmpFactors.data(),
     fftSize);
-  // Why are there no negatives in this result?
   logSignal("100-carrier-fft-real-x-reduced-amp-factors.txt", fftSize, carrierRealWithReducedAmpFactors.data());
 
   // Multiply the imaginary components of the carrier fft by the reduced
   // combined amps.
-  FFTArray carrierImagBins;
-  getImaginary(carrierFFTData, carrierImagBins);
   FFTArray carrierImagWithReducedAmpFactors;
   FloatVectorOperations::multiply(
     carrierImagWithReducedAmpFactors.data(),
     carrierImagBins.data(),
     reducedAmpFactors.data(),
     fftSize);
-  // Why are there no negatives in this result?
   logSignal("150-carrier-fft-imag-x-reduced-amp-factors.txt", fftSize, carrierImagWithReducedAmpFactors.data());
 
   ComplexFFTArray ifftData;
