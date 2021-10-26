@@ -141,6 +141,7 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   addRealAndImag(carrierFFTData, carrierFFTSqAdded);
   logSignal("050-carrier-rfft-added.txt", fftSize, carrierFFTSqAdded.data());
   addRealAndImag(infoFFTData, infoFFTSqAdded);
+  logSignal("055-info-rfft-added.txt", fftSize, infoFFTSqAdded.data());
 
   //saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, maxSamples, "carrierFFTSqAdded", debugSignals);
   //saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, maxSamples, "infoFFTSqAdded", debugSignals);
@@ -191,6 +192,8 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
   ComplexFFTArray ifftData;
   getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
   //getIFFT(carrierRealBins, carrierImagBins, ifftData);
+
+  applyHannWindow(ifftData);
 
   // Copy the results to the channel.
   for (int i = 0; i < fftSize; ++i) {
