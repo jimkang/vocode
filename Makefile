@@ -8,3 +8,7 @@ debug: clean-logs
 
 clean-logs:
 	rm logs/* || echo "Logs clean already."
+
+show-pd-snaps:
+	node tools/wrap-images-in-html.js debug-snapshots/pd tools/page-template.html tools/entry-template.html > debug-snapshots/pd/index.html
+	firefox debug-snapshots/pd/index.html

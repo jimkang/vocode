@@ -28,6 +28,7 @@ console.log(pageTemplate.replace(/__ENTRIES__/, entriesHTML));
 function makeHTMLForEntry(file) {
   var html = entryTemplate.slice();
   var entry = {
+    id: file,
     name: file,
     imgurl: file,
     imgalt: file,
