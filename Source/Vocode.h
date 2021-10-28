@@ -7,13 +7,14 @@
 using namespace juce;
 using namespace std;
 
-static void vocodeChannel(const vector<float>& carrierSamples, const vector<float>& infoSamples, vector<float>& outSamples, const DebugSignals& debugSignals);
-static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<float>& infoBlockSamples, vector<float>& outBlockSamples, const DebugSignals& debugSignals);
+static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples, const DebugSignals& debugSignals);
+static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, const DebugSignals& debugSignals);
 
 static void getReducedCombinedAmpFactors(
   ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer,
+  double sampleRate,
   DebugSignalsForChannels& debugSignalsForChannels,
   AudioBuffer<float>& outBuffer) {
 
@@ -29,11 +30,12 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
     vector<float> infoSamples(infoBuffer.getReadPointer(ch), infoBuffer.getReadPointer(ch) + maxSamples);
     vector<float> outSamples(maxSamples);
 
+
     //for (int i = 0; i < outSamples.size(); ++i) {
       //outSamples[i] = carrierSamples[i];
     //}
 
-    vocodeChannel(carrierSamples, infoSamples, outSamples, *debugSignalsForChannels[ch]);
+    vocodeChannel(carrierSamples, infoSamples, sampleRate, outSamples, *debugSignalsForChannels[ch]);
 
     //for (auto it = outSamples.begin(); it != outSamples.end(); ++it) {
       //if (*it > 0.01) {
@@ -50,13 +52,19 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
   }
 }
 
-static void vocodeChannel(const vector<float>& carrierSamples, const vector<float>& infoSamples, vector<float>& outSamples, const DebugSignals& debugSignals) {
+static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples, const DebugSignals& debugSignals) {
   const int maxBlocks = outSamples.size()/fftSize;
   // Leave out the last partial block for now.
 
   auto carrierStart = carrierSamples.begin();
   auto infoStart = infoSamples.begin();
   auto outStart = outSamples.begin();
+
+  IIRFilter carrierHighPassFilter;
+  IIRFilter infoHighPassFilter;
+  double freq = 5;
+  carrierHighPassFilter.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, freq));
+  infoHighPassFilter.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, freq));
 
   //for (int i = 0; i < outSamples.size(); ++i) {
     //outSamples[i] = carrierSamples[i];
@@ -69,11 +77,15 @@ static void vocodeChannel(const vector<float>& carrierSamples, const vector<floa
     auto carrierNext = carrierStart + blockSize;
     auto infoNext = infoStart + blockSize;
     auto outNext = outStart + blockSize;
+    vector<float> carrierBlockSamples(carrierStart, carrierNext);
+    vector<float> infoBlockSamples(infoStart, infoNext);
     vector<float> outBlockSamples(outStart, outNext);
 
     vocodeBlock(
-      vector<float>(carrierStart, carrierNext),
-      vector<float>(infoStart, infoNext),
+      carrierBlockSamples,
+      infoBlockSamples,
+      carrierHighPassFilter,
+      infoHighPassFilter,
       outBlockSamples,
       debugSignals
     );
@@ -91,7 +103,7 @@ static void vocodeChannel(const vector<float>& carrierSamples, const vector<floa
   }
 }
 
-static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<float>& infoBlockSamples, vector<float>& outBlockSamples, const DebugSignals& debugSignals) {
+static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, const DebugSignals& debugSignals) {
 
   //auto carrierSample = carrierBlockSamples.begin();
   //auto outSample = outBlockSamples.begin();
@@ -99,6 +111,8 @@ static void vocodeBlock(const vector<float>& carrierBlockSamples, const vector<f
     //outBlockSamples[i] = carrierSample[i];
   //}
   //return;
+  carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
+  infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
 
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
