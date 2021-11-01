@@ -14,7 +14,8 @@ export async function graphArray({
   fitToParentWidth = false,
   zoomable = false,
   yBounds,
-  renderInfinities = true
+  renderInfinities = true,
+  maxMagToShow
 }) {
   var nonInfArray = array;
   var infArray = [];
@@ -34,6 +35,9 @@ export async function graphArray({
       }
     }
   }      
+  if (!isNaN(maxMagToShow)) {
+    nonInfArray = nonInfArray.map(x => Math.abs(x) > maxMagToShow ? 0 : x);
+  }
 
   var width = waveformWidth;
   if (fitToParentWidth) {

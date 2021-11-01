@@ -3,11 +3,20 @@ import { version } from './package.json';
 import { respondToFileChanges } from './responders/respond-to-file-changes';
 import { graphArray } from './index';
 import { select } from 'd3-selection';
+import RouteState from 'route-state';
+
+var routeState = RouteState({
+  followRoute,
+  windowObject: window,
+});
 
 (async function go() {
   window.onerror = reportTopLevelError;
   renderVersion();
+  routeState.routeFromHash();
+})();
 
+function followRoute({ maxMagToShow }) {
   renderSource({ onArrays });
 
   function onArrays(namedArrays) {
@@ -27,7 +36,11 @@ import { select } from 'd3-selection';
   }
 
   function fillInGraphAndLabels({ array }, i) {
-    var yBounds = getYBounds(array);
+    var yBounds = getYBounds(
+      array,
+      !isNaN(maxMagToShow) ? +maxMagToShow : undefined
+    );
+
     graphArray({
       id: i,
       array,
@@ -36,6 +49,7 @@ import { select } from 'd3-selection';
       fitToParentWidth: true,
       zoomable: true,
       yBounds,
+      maxMagToShow: +maxMagToShow,
     });
     var containerSel = select(this);
     containerSel.select('h3').text((na) => na.name);
@@ -52,20 +66,21 @@ import { select } from 'd3-selection';
       respondToFileChanges({ files: this.files, onArrays });
     }
   }
-})();
-
-function getYBounds(array) {
-  const biggestAbs = array.reduce(getBiggerAbs, 1.0);
-  return [-biggestAbs, biggestAbs];
 }
 
-// Don't count infinity as a possible bound.
-function getBiggerAbs(a, b) {
-  const absB = Math.abs(b);
-  if (b === Infinity) {
-    return a;
+function getYBounds(array, maxMagToShow = Infinity) {
+  const biggestAbs = array.reduce(getBiggerAbs, 1.0);
+  return [-biggestAbs, biggestAbs];
+
+  // Don't count infinity as a possible bound.
+  function getBiggerAbs(a, b) {
+    const absB = Math.abs(b);
+    if (b === Infinity || b >= maxMagToShow) {
+      return a;
+    }
+
+    return a > absB ? a : absB;
   }
-  return a > absB ? a : absB;
 }
 
 function reportTopLevelError(msg, url, lineNo, columnNo, error) {
