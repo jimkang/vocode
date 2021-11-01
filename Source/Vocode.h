@@ -179,13 +179,16 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   //saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, maxSamples, "infoFFTSqAddedSqrt", debugSignals);
 
   FFTArray combinedAmpFactors;
-  FloatVectorOperations::multiply(
-    combinedAmpFactors.data(), // dest
-    carrierFFTSqAddedRSqrt.data(),
-    infoFFTSqAddedSqrt.data(),
-    fftSize);
+  //FloatVectorOperations::multiply(
+    //combinedAmpFactors.data(), // dest
+    //carrierFFTSqAddedRSqrt.data(),
+    //infoFFTSqAddedSqrt.data(),
+    //fftSize);
+  for (int i = 0; i < combinedAmpFactors.size(); ++i) {
+    combinedAmpFactors[i] = carrierFFTSqAddedRSqrt[i] * infoFFTSqAddedSqrt[i];
+  }
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
-  logSignal("080-carrier-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
+  logSignal("080-amp-factor-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
 
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
