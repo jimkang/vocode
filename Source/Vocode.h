@@ -137,6 +137,14 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
 
   logSignal("040-carrierFFT.txt", fftSize, carrierFFTData.data());
 
+  FFTArray infoRealBins;
+  getReal(infoFFTData, infoRealBins);
+  logSignal("042-info-fft-real.txt", fftSize, infoRealBins.data());
+
+  FFTArray infoImagBins;
+  getImaginary(infoFFTData, infoImagBins);
+  logSignal("043-info-fft-imag.txt", fftSize, infoImagBins.data());
+
   // Multiply the reduced real components of the carrier fft by the reduced
   // combined amps.
   FFTArray carrierRealBins;
