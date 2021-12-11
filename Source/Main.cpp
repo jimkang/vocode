@@ -92,6 +92,7 @@ int main (int argc, char* argv[])
   DebugSignals *debugSignals = debugSignalsForChannels[0];
   float *signal = (*debugSignals)["carrierHann"];
 
+  cout << "Block size: " << blockSize << endl;
   //reconstruct(carrierBuffer, outBuffer);
   vocode(carrierBuffer, infoBuffer, sampleRate, debugSignalsForChannels, outBuffer);
 
