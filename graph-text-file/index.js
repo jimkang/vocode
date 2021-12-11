@@ -36,7 +36,7 @@ export async function graphArray({
     }
   }      
   if (!isNaN(maxMagToShow)) {
-    nonInfArray = nonInfArray.map(x => Math.abs(x) > maxMagToShow ? 0 : x);
+    nonInfArray = nonInfArray.map(x => Math.abs(x) >= maxMagToShow ? 0 : x);
   }
 
   var width = waveformWidth;

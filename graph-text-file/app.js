@@ -16,7 +16,7 @@ var routeState = RouteState({
   routeState.routeFromHash();
 })();
 
-function followRoute({ maxMagToShow }) {
+function followRoute({ maxMagToShow = 9999999 }) {
   renderSource({ onArrays });
 
   function onArrays(namedArrays) {
