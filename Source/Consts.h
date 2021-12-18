@@ -6,7 +6,6 @@ const int fftPowerOf2 = 10;
 const int fftSize = 1 << fftPowerOf2;
 const int blockSize = fftSize;
 const int blockSizeInBytes = blockSize * sizeof(float);
-
 // These come from Miller Puckette's timbre-stamp Pure Data patch.
 // I imagine they were determined via experimentation.
 const float maxCarrierMag = 9;

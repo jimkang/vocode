@@ -125,8 +125,8 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   }
 
   if (blockIndex == blockIndexToLog) {
-    logSignal("010-carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
-    logSignal("020-carrier.txt", fftSize, carrierFFTData.data());
+    logSignal("005-info-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+    logSignal("010-carrier-raw.txt", infoBlockSamples.size(), infoBlockSamples.data());
   }
 
   applyHannWindow(carrierFFTData);
@@ -134,6 +134,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
 
   // TODO: Include channel in filename.
   if (blockIndex == blockIndexToLog) {
+    logSignal("007-infoHann.txt", fftSize, infoFFTData.data());
     logSignal("030-carrierHann.txt", fftSize, carrierFFTData.data());
   }
 
