@@ -9,15 +9,14 @@ using namespace std;
 
 const int blockIndexToLog = 100;
 
-static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples, const DebugSignals& debugSignals);
-static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex, const DebugSignals& debugSignals);
+static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples);
+static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex);
 
 static void getReducedCombinedAmpFactors(
   ComplexFFTArray& carrierFFTData, ComplexFFTArray& infoFFTData, FFTArray& reducedAmpFactors);
 
 static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBuffer,
   double sampleRate,
-  DebugSignalsForChannels& debugSignalsForChannels,
   AudioBuffer<float>& outBuffer) {
 
   int channelCount = carrierBuffer.getNumChannels();
@@ -37,7 +36,7 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
       //outSamples[i] = carrierSamples[i];
     //}
 
-    vocodeChannel(carrierSamples, infoSamples, sampleRate, outSamples, *debugSignalsForChannels[ch]);
+    vocodeChannel(carrierSamples, infoSamples, sampleRate, outSamples);
 
     //for (auto it = outSamples.begin(); it != outSamples.end(); ++it) {
       //if (*it > 0.01) {
@@ -54,7 +53,7 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
   }
 }
 
-static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples, const DebugSignals& debugSignals) {
+static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples) {
   const int maxBlocks = outSamples.size()/fftSize;
   // Leave out the last partial block for now.
 
@@ -89,8 +88,7 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
       carrierHighPassFilter,
       infoHighPassFilter,
       outBlockSamples,
-      blockIndex,
-      debugSignals
+      blockIndex
     );
 
     // TODO: Cut down on the copying.
@@ -106,7 +104,7 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
   }
 }
 
-static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex, const DebugSignals& debugSignals) {
+static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex) {
 
   //auto carrierSample = carrierBlockSamples.begin();
   //auto outSample = outBlockSamples.begin();
@@ -185,9 +183,6 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     logSignal("055-info-rfft-added.txt", fftSize, infoFFTSqAdded.data());
   }
 
-  //saveArrayToDebug(carrierFFTSqAdded.data(), offsetOfBlock, maxSamples, "carrierFFTSqAdded", debugSignals);
-  //saveArrayToDebug(infoFFTSqAdded.data(), offsetOfBlock, maxSamples, "infoFFTSqAdded", debugSignals);
-
   FFTArray carrierFFTSqAddedRSqrt;
   FFTArray infoFFTSqAddedSqrt;
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
@@ -196,9 +191,6 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     logSignal("060-carrierRSqrt.txt", fftSize, carrierFFTSqAddedRSqrt.data());
     logSignal("070-infoSqrt.txt", fftSize, infoFFTSqAddedSqrt.data());
   }
-
-  //saveArrayToDebug(carrierFFTSqAddedRSqrt.data(), offsetOfBlock, maxSamples, "carrierFFTSqAddedRSqrt", debugSignals);
-  //saveArrayToDebug(infoFFTSqAddedSqrt.data(), offsetOfBlock, maxSamples, "infoFFTSqAddedSqrt", debugSignals);
 
   FFTArray combinedAmpFactors;
   //FloatVectorOperations::multiply(

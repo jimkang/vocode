@@ -73,64 +73,11 @@ int main (int argc, char* argv[])
   juce::AudioBuffer<float> outBuffer;
   outBuffer.setSize(channelCount, outLen);
 
-  DebugSignalsForChannels debugSignalsForChannels;
-
-  for (int ch = 0; ch < channelCount; ++ch) {
-    DebugSignals *debugSignals = new DebugSignals({
-      {"carrierHann", new float[outLen]},
-      {"infoHann", new float[outLen]},
-      {"carrierFFT", new float[outLen]},
-      {"infoFFT", new float[outLen]},
-      {"carrierFFTSqAdded", new float[outLen]},
-      {"infoFFTSqAdded", new float[outLen]},
-      {"carrierFFTSqAddedRSqrt", new float[outLen]},
-      {"infoFFTSqAddedSqrt", new float[outLen]}
-    });
-    debugSignalsForChannels[ch] = debugSignals;
-  };
-
-  DebugSignals *debugSignals = debugSignalsForChannels[0];
-  float *signal = (*debugSignals)["carrierHann"];
-
   cout << "Block size: " << blockSize << endl;
   //reconstruct(carrierBuffer, outBuffer);
-  vocode(carrierBuffer, infoBuffer, sampleRate, debugSignalsForChannels, outBuffer);
+  vocode(carrierBuffer, infoBuffer, sampleRate, outBuffer);
 
   writeBufferToFile(outBuffer, sampleRate, bitsPerSample, outFilePath);
 
-  DebugSignals *debugSignalsLeft = debugSignalsForChannels[0];
-
-  DebugSignals *debugSignalsRight = NULL;
-  if (channelCount > 1) {
-    debugSignalsRight = debugSignalsForChannels[1];
-  }
-
-  for (auto it = debugSignalsLeft->begin(); it != debugSignals->end(); ++it) {
-    float *signalLeft = it->second;
-    float *signalRight = NULL;
-    // Assumption: Signal names are the same in the DebugSignals for each channel.
-    if (debugSignalsRight) {
-      signalRight = (*debugSignalsRight)[it->first];
-    }
-
-    float *signalsByChannel[1] = { signalLeft };
-    float *dualSignalsByChannel[2] = { signalLeft, signalRight };
-
-    string filePath = string("../../../debug-snapshots/juce/").append(it->first);
-
-    if (!writeArrayToFile(signalRight ? dualSignalsByChannel : signalsByChannel, channelCount, outLen,
-      sampleRate, bitsPerSample, filePath.c_str())) {
-
-      cerr << "Unable to write debug signal for " << it->first << endl;
-    }
-  }
-
-  for (int ch = 0; ch < channelCount; ++ch) {
-    DebugSignals *debugSignals = debugSignalsForChannels[ch];
-    for (auto it = debugSignals->begin(); it != debugSignals->end(); ++it) {
-      delete it->second;
-    }
-    delete debugSignals;
-  };
   return 0;
 }

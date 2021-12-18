@@ -11,8 +11,6 @@ static bool verbose = true;
 
 typedef array<float, fftSize * 2> ComplexFFTArray;
 typedef array<float, fftSize> FFTArray;
-typedef map<string, float *> DebugSignals;
-typedef array<DebugSignals *, 2> DebugSignalsForChannels;
 
 static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& ifftData);
 static void getMagnitudes(ComplexFFTArray& fftData, FFTArray& binMagnitudes, bool addTinyNumber);
@@ -156,18 +154,5 @@ static void squareSignal(float *array, int size) {
 static void addRealAndImag(const ComplexFFTArray& compFFTArray, FFTArray& sumArray) {
   for (int i = 0; i < fftSize; ++i) {
     sumArray[i] = compFFTArray[i] + compFFTArray[i + fftSize];
-  }
-}
-
-static void saveArrayToDebug(
-  const float *array,
-  int writeStart,
-  int length,
-  const string& debugName,
-  DebugSignals& debugSignals) {
-
-  float *writePtr = debugSignals[debugName];
-  for (int i = 0; i < length; ++i) {
-    writePtr[writeStart + i] += array[i];
   }
 }
