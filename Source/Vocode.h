@@ -54,7 +54,7 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
 }
 
 static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples) {
-  const int maxBlocks = outSamples.size()/fftSize;
+  const int maxBlocks = outSamples.size()/blockSize;
   // Leave out the last partial block for now.
 
   auto carrierStart = carrierSamples.begin();
@@ -134,15 +134,15 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
 
   // TODO: Include channel in filename.
   if (blockIndex == blockIndexToLog) {
-    logSignal("007-infoHann.txt", fftSize, infoFFTData.data());
-    logSignal("030-carrierHann.txt", fftSize, carrierFFTData.data());
+    logSignal("007-infoHann.txt", blockSize, infoFFTData.data());
+    logSignal("030-carrierHann.txt", blockSize, carrierFFTData.data());
   }
 
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
 
   if (blockIndex == blockIndexToLog) {
-    logSignal("040-carrierFFT.txt", fftSize, carrierFFTData.data());
+    logSignal("040-carrierFFT.txt", fftSize * 2, carrierFFTData.data());
   }
 
   FFTArray infoRealBins;
@@ -198,7 +198,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     //combinedAmpFactors.data(), // dest
     //carrierFFTSqAddedRSqrt.data(),
     //infoFFTSqAddedSqrt.data(),
-    //fftSize);
+    //blockSize);
   for (int i = 0; i < combinedAmpFactors.size(); ++i) {
     combinedAmpFactors[i] = carrierFFTSqAddedRSqrt[i] * infoFFTSqAddedSqrt[i];
   }
@@ -242,7 +242,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   applyHannWindow(ifftData);
 
   // Copy the results to the channel.
-  for (int i = 0; i < fftSize; ++i) {
+  for (int i = 0; i < blockSize; ++i) {
     outBlockSamples[i] = ifftData[i];
   }
 }

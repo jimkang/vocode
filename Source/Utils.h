@@ -22,13 +22,13 @@ static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, Comp
 static float reciprocalSqRt(float bin);
 
 static void applyHannWindow(ComplexFFTArray& fftData) {
-  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
+  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann, false);
   window.multiplyWithWindowingTable(fftData.data(), fftSize);
 }
 
 // fftData will have real and imaginary parts interleaved.
 static void getFFT(ComplexFFTArray& fftData) {
-  dsp::FFT fft(fftPowerOf2);
+  dsp::FFT fft(fftSize);
   fft.performRealOnlyForwardTransform(fftData.data(), true);
   // The second param, dontCalculateNegativeFrequencies, is ignored in the fallback
   // FFT impl. so we have to zero the second half ourselves if we don't want it.
@@ -44,12 +44,9 @@ static void getIFFT(FFTArray& realBins, FFTArray& imagBins, ComplexFFTArray& iff
   zipTogetherComplexArray(realBins, imagBins, ifftData);
   dsp::FFT fft(fftPowerOf2);
   fft.performRealOnlyInverseTransform(ifftData.data());
-  printSamples("ifftData", ifftData.data(), fftSize);
 
   dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
   window.multiplyWithWindowingTable(ifftData.data(), fftSize);
-
-  printSamples("ifftData, after windowing", ifftData.data(), fftSize);
 }
 
 // Assumes fftData will have real and imaginary parts interleaved.
