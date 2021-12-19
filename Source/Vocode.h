@@ -112,30 +112,29 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     //outBlockSamples[i] = carrierSample[i];
   //}
   //return;
-  carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
-  infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
+  //carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
+  //infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
 
   // Run a real-only FFT on both signals.
   ComplexFFTArray carrierFFTData;
   ComplexFFTArray infoFFTData;
 
-  for (int i = 0; i < carrierBlockSamples.size(); ++i) {
-    carrierFFTData[i] = carrierBlockSamples[i];
-    infoFFTData[i] = infoBlockSamples[i];
-  }
-
   if (blockIndex == blockIndexToLog) {
     logSignal("005-info-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
     logSignal("010-carrier-raw.txt", infoBlockSamples.size(), infoBlockSamples.data());
   }
-
-  applyHannWindow(carrierFFTData);
-  applyHannWindow(infoFFTData);
+  applyHannWindow(carrierBlockSamples.data(), carrierBlockSamples.size());
+  applyHannWindow(infoBlockSamples.data(), infoBlockSamples.size());
 
   // TODO: Include channel in filename.
   if (blockIndex == blockIndexToLog) {
-    logSignal("007-infoHann.txt", fftSize, infoFFTData.data());
-    logSignal("030-carrierHann.txt", fftSize, carrierFFTData.data());
+    logSignal("007-infoHann.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("030-carrierHann.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+  }
+
+  for (int i = 0; i < carrierBlockSamples.size(); ++i) {
+    carrierFFTData[i] = carrierBlockSamples[i];
+    infoFFTData[i] = infoBlockSamples[i];
   }
 
   getFFT(carrierFFTData);
@@ -239,7 +238,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   getIFFT(carrierRealWithReducedAmpFactors, carrierImagWithReducedAmpFactors, ifftData);
   //getIFFT(carrierRealBins, carrierImagBins, ifftData);
 
-  applyHannWindow(ifftData);
+  applyHannWindow(ifftData.data(), ifftData.size());
 
   // Copy the results to the channel.
   for (int i = 0; i < fftSize; ++i) {

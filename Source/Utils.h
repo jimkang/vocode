@@ -21,9 +21,9 @@ static void getImaginary(ComplexFFTArray& fftData, FFTArray& imagVals);
 static void zipTogetherComplexArray(FFTArray& realVals, FFTArray& imagVals, ComplexFFTArray& fftData);
 static float reciprocalSqRt(float bin);
 
-static void applyHannWindow(ComplexFFTArray& fftData) {
-  dsp::WindowingFunction<float> window(fftSize, dsp::WindowingFunction<float>::hann);
-  window.multiplyWithWindowingTable(fftData.data(), fftSize);
+static void applyHannWindow(float *signalBlock, int size) {
+  dsp::WindowingFunction<float> window(size, dsp::WindowingFunction<float>::hann, false);
+  window.multiplyWithWindowingTable(signalBlock, size);
 }
 
 // fftData will have real and imaginary parts interleaved.
