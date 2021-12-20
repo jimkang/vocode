@@ -69,7 +69,7 @@ function followRoute({ maxMagToShow = 9999999 }) {
 }
 
 function getYBounds(array, maxMagToShow = Infinity) {
-  const biggestAbs = array.reduce(getBiggerAbs, 1.0);
+  const biggestAbs = array.reduce(getBiggerAbs, 0.00001);
   return [-biggestAbs, biggestAbs];
 
   // Don't count infinity as a possible bound.
