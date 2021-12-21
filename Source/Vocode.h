@@ -115,22 +115,22 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   //carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
   //infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
 
-  // Run a real-only FFT on both signals.
-  ComplexFFTArray carrierFFTData;
-  ComplexFFTArray infoFFTData;
-
   if (blockIndex == blockIndexToLog) {
-    logSignal("005-info-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
-    logSignal("010-carrier-raw.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("005-info-raw.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("010-carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
-  applyHannWindow(carrierBlockSamples.data(), carrierBlockSamples.size());
   applyHannWindow(infoBlockSamples.data(), infoBlockSamples.size());
+  applyHannWindow(carrierBlockSamples.data(), carrierBlockSamples.size());
 
   // TODO: Include channel in filename.
   if (blockIndex == blockIndexToLog) {
     logSignal("007-infoHann.txt", infoBlockSamples.size(), infoBlockSamples.data());
     logSignal("030-carrierHann.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
+
+  // Run a real-only FFT on both signals.
+  ComplexFFTArray carrierFFTData;
+  ComplexFFTArray infoFFTData;
 
   for (int i = 0; i < carrierBlockSamples.size(); ++i) {
     carrierFFTData[i] = carrierBlockSamples[i];
