@@ -116,16 +116,16 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   //infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
 
   if (blockIndex == blockIndexToLog) {
-    logSignal("005-info-raw.txt", infoBlockSamples.size(), infoBlockSamples.data());
-    logSignal("010-carrier-raw.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+    logSignal("005-info-raw-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("010-carrier-raw-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
   applyHannWindow(infoBlockSamples.data(), infoBlockSamples.size());
   applyHannWindow(carrierBlockSamples.data(), carrierBlockSamples.size());
 
   // TODO: Include channel in filename.
   if (blockIndex == blockIndexToLog) {
-    logSignal("007-infoHann.txt", infoBlockSamples.size(), infoBlockSamples.data());
-    logSignal("030-carrierHann.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+    logSignal("007-info-hann-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("030-carrier-hann-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
 
   // Run a real-only FFT on both signals.
@@ -140,21 +140,21 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   getFFT(carrierFFTData);
   getFFT(infoFFTData);
 
-  if (blockIndex == blockIndexToLog) {
-    logSignal("040-carrierFFT.txt", fftSize, carrierFFTData.data());
-  }
+  //if (blockIndex == blockIndexToLog) {
+    //logSignal("040-carrierFFT-b.txt", fftSize, carrierFFTData.data());
+  //}
 
   FFTArray infoRealBins;
   getReal(infoFFTData, infoRealBins);
   if (blockIndex == blockIndexToLog) {
-    logSignal("042-info-fft-real.txt", fftSize, infoRealBins.data());
+    logSignal("042-info-fft-real-b.txt", fftSize, infoRealBins.data());
   }
 
 
   FFTArray infoImagBins;
   getImaginary(infoFFTData, infoImagBins);
   if (blockIndex == blockIndexToLog) {
-    logSignal("043-info-fft-imag.txt", fftSize, infoImagBins.data());
+    logSignal("043-info-fft-imag-b.txt", fftSize, infoImagBins.data());
   }
 
   // Multiply the reduced real components of the carrier fft by the reduced
@@ -162,13 +162,13 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   FFTArray carrierRealBins;
   getReal(carrierFFTData, carrierRealBins);
   if (blockIndex == blockIndexToLog) {
-    logSignal("045-carrier-fft-real.txt", fftSize, carrierRealBins.data());
+    logSignal("045-carrier-fft-real-b.txt", fftSize, carrierRealBins.data());
   }
 
   FFTArray carrierImagBins;
   getImaginary(carrierFFTData, carrierImagBins);
   if (blockIndex == blockIndexToLog) {
-    logSignal("047-carrier-fft-imag.txt", fftSize, carrierImagBins.data());
+    logSignal("047-carrier-fft-imag-b.txt", fftSize, carrierImagBins.data());
   }
 
   // NOTE: we are altering carrierFFTData.
@@ -179,8 +179,8 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   addRealAndImag(carrierFFTData, carrierFFTSqAdded);
   addRealAndImag(infoFFTData, infoFFTSqAdded);
   if (blockIndex == blockIndexToLog) {
-    logSignal("050-carrier-rfft-added.txt", fftSize, carrierFFTSqAdded.data());
-    logSignal("055-info-rfft-added.txt", fftSize, infoFFTSqAdded.data());
+    logSignal("050-carrier-rfft-added-b.txt", fftSize, carrierFFTSqAdded.data());
+    logSignal("055-info-rfft-added-b.txt", fftSize, infoFFTSqAdded.data());
   }
 
   FFTArray carrierFFTSqAddedRSqrt;
@@ -188,8 +188,8 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
   if (blockIndex == blockIndexToLog) {
-    logSignal("060-carrierRSqrt.txt", fftSize, carrierFFTSqAddedRSqrt.data());
-    logSignal("070-infoSqrt.txt", fftSize, infoFFTSqAddedSqrt.data());
+    logSignal("060-carrier-rsqrt-b.txt", fftSize, carrierFFTSqAddedRSqrt.data());
+    logSignal("070-info-sqrt-b.txt", fftSize, infoFFTSqAddedSqrt.data());
   }
 
   FFTArray combinedAmpFactors;
@@ -203,7 +203,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   }
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
   if (blockIndex == blockIndexToLog) {
-    logSignal("080-amp-factor-roots-multiplied.txt", fftSize, combinedAmpFactors.data());
+    logSignal("080-amp-factor-roots-multiplied-b.txt", fftSize, combinedAmpFactors.data());
   }
 
   // Turn down the combined amps.
@@ -219,7 +219,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     reducedAmpFactors.data(),
     fftSize);
   if (blockIndex == blockIndexToLog) {
-    logSignal("100-carrier-fft-real-x-reduced-amp-factors.txt", fftSize, carrierRealWithReducedAmpFactors.data());
+    logSignal("100-carrier-fft-real-x-reduced-amp-factors-b.txt", fftSize, carrierRealWithReducedAmpFactors.data());
   }
 
   // Multiply the imaginary components of the carrier fft by the reduced
@@ -231,7 +231,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     reducedAmpFactors.data(),
     fftSize);
   if (blockIndex == blockIndexToLog) {
-    logSignal("150-carrier-fft-imag-x-reduced-amp-factors.txt", fftSize, carrierImagWithReducedAmpFactors.data());
+    logSignal("150-carrier-fft-imag-x-reduced-amp-factors-b.txt", fftSize, carrierImagWithReducedAmpFactors.data());
   }
 
   ComplexFFTArray ifftData;

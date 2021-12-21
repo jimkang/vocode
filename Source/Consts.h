@@ -15,4 +15,4 @@ const float tinyNumber = pow(10, -20);
 const int overlapSize = 0;//pow(2, fftPowerOf2 - 1);
 
 // TODO: Make this an arg.
-const char *baseLogPath = "../../../juce-logs/";
+const char *baseLogPath = "../../../logs/";
