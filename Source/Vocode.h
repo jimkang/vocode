@@ -7,8 +7,6 @@
 using namespace juce;
 using namespace std;
 
-const int blockIndexToLog = 24;
-
 static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples);
 static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex);
 
@@ -112,13 +110,18 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     //outBlockSamples[i] = carrierSample[i];
   //}
   //return;
-  //carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
-  //infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
-
   if (blockIndex == blockIndexToLog) {
     logSignal("005-info-raw-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
     logSignal("010-carrier-raw-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
+
+  carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
+  infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
+  if (blockIndex == blockIndexToLog) {
+    logSignal("006-info-highpass-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
+    logSignal("020-carrier-highpass-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
+  }
+
   applyHannWindow(infoBlockSamples.data(), infoBlockSamples.size());
   applyHannWindow(carrierBlockSamples.data(), carrierBlockSamples.size());
 
