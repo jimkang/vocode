@@ -7,7 +7,7 @@
 using namespace juce;
 using namespace std;
 
-const int blockIndexToLog = 100;
+const int blockIndexToLog = 24;
 
 static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples);
 static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex);
@@ -54,7 +54,7 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
 }
 
 static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamples, double sampleRate, vector<float>& outSamples) {
-  const int maxBlocks = outSamples.size()/fftSize;
+  const int maxBlocks = outSamples.size()/blockSize;
   // Leave out the last partial block for now.
 
   auto carrierStart = carrierSamples.begin();
