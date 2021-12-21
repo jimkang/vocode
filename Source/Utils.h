@@ -151,9 +151,7 @@ static float reciprocalSqRt(float bin) {
 static void rSqrtSignal(const float *array, int size, float *outArray) {
   for (int i = 0; i < size; ++i) {
     float val = array[i];
-    if (val == 0) {
-      val = tinyNumber;
-    }
+    val += tinyNumber;
     outArray[i] = reciprocalSqRt(val);
   }
 }
