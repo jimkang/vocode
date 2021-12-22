@@ -151,8 +151,14 @@ static float reciprocalSqRt(float bin) {
 static void rSqrtSignal(const float *array, int size, float *outArray) {
   for (int i = 0; i < size; ++i) {
     float val = array[i];
-    val += tinyNumber;
-    outArray[i] = reciprocalSqRt(val);
+    if (val == 0) {
+      val += tinyNumber;
+    }
+    const float result = reciprocalSqRt(val);
+    if (val == tinyNumber) {
+      cout << "0 at " << i << " yields: " << result << endl;
+    }
+    outArray[i] = result;
   }
 }
 
@@ -172,11 +178,5 @@ static void sqrtSignal(const float *array, int size, float *outArray) {
 static void squareSignal(float *array, int size) {
   for (int i = 0; i < size; ++i) {
     array[i] *= array[i];
-  }
-}
-
-static void addRealAndImag(const ComplexFFTArray& compFFTArray, FFTArray& sumArray) {
-  for (int i = 0; i < fftSize; ++i) {
-    sumArray[i] = compFFTArray[i] + compFFTArray[i + fftSize];
   }
 }

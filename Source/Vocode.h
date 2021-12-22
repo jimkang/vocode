@@ -174,13 +174,22 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     logSignal("047-carrier-fft-imag-b.txt", fftSize, carrierImagBins.data());
   }
 
-  // NOTE: we are altering carrierFFTData.
-  squareSignal(carrierFFTData.data(), fftSize * 2);
-  squareSignal(infoFFTData.data(), fftSize * 2);
+  // NOTE: we are altering the things we square.
+  squareSignal(carrierRealBins.data(), fftSize);
+  squareSignal(carrierImagBins.data(), fftSize);
+  squareSignal(infoRealBins.data(), fftSize);
+  squareSignal(infoImagBins.data(), fftSize);
+  if (blockIndex == blockIndexToLog) {
+    logSignal("048-info-fft-real-sq-b.txt", fftSize, infoRealBins.data());
+    logSignal("048.5-info-fft-imag-sq-b.txt", fftSize, infoImagBins.data());
+    logSignal("049-carrier-fft-real-sq-b.txt", fftSize, carrierRealBins.data());
+    logSignal("049.5-carrier-fft-imag-sq-b.txt", fftSize, carrierImagBins.data());
+  }
+
   FFTArray carrierFFTSqAdded;
   FFTArray infoFFTSqAdded;
-  addRealAndImag(carrierFFTData, carrierFFTSqAdded);
-  addRealAndImag(infoFFTData, infoFFTSqAdded);
+  FloatVectorOperations::add(infoFFTSqAdded.data(), infoRealBins.data(), infoImagBins.data(), fftSize);
+  FloatVectorOperations::add(carrierFFTSqAdded.data(), carrierRealBins.data(), carrierImagBins.data(), fftSize);
   if (blockIndex == blockIndexToLog) {
     logSignal("050-carrier-rfft-added-b.txt", fftSize, carrierFFTSqAdded.data());
     logSignal("055-info-rfft-added-b.txt", fftSize, infoFFTSqAdded.data());
