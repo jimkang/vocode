@@ -16,4 +16,4 @@ const int overlapSize = 0;//pow(2, fftPowerOf2 - 1);
 
 // TODO: Make this an arg.
 const char *baseLogPath = "../../../logs/";
-const int blockIndexToLog = 82;
+const int blockIndexToLog = 68;
