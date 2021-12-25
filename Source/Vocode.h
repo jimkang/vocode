@@ -197,6 +197,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
 
   FFTArray carrierFFTSqAddedRSqrt;
   FFTArray infoFFTSqAddedSqrt;
+  // Why does this get so big?
   rSqrtSignal(carrierFFTSqAdded.data(), fftSize, carrierFFTSqAddedRSqrt.data());
   sqrtSignal(infoFFTSqAdded.data(), fftSize, infoFFTSqAddedSqrt.data());
   if (blockIndex == blockIndexToLog) {
@@ -205,14 +206,14 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   }
 
   FFTArray combinedAmpFactors;
-  //FloatVectorOperations::multiply(
-    //combinedAmpFactors.data(), // dest
-    //carrierFFTSqAddedRSqrt.data(),
-    //infoFFTSqAddedSqrt.data(),
-    //fftSize);
-  for (int i = 0; i < combinedAmpFactors.size(); ++i) {
-    combinedAmpFactors[i] = carrierFFTSqAddedRSqrt[i] * infoFFTSqAddedSqrt[i];
-  }
+  FloatVectorOperations::multiply(
+    combinedAmpFactors.data(), // dest
+    carrierFFTSqAddedRSqrt.data(),
+    infoFFTSqAddedSqrt.data(),
+    fftSize);
+  //for (int i = 0; i < combinedAmpFactors.size(); ++i) {
+    //combinedAmpFactors[i] = carrierFFTSqAddedRSqrt[i] * infoFFTSqAddedSqrt[i];
+  //}
   printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
   if (blockIndex == blockIndexToLog) {
     logSignal("080-amp-factor-roots-multiplied-b.txt", fftSize, combinedAmpFactors.data());
