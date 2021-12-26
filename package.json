@@ -18,5 +18,9 @@
   "homepage": "https://github.com/jimkang/vocode#readme",
   "devDependencies": {
     "eslint": "^8.1.0"
+  },
+  "dependencies": {
+    "d3-queue": "^3.0.7",
+    "oknok": "^3.0.0"
   }
 }

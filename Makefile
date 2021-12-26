@@ -9,6 +9,9 @@ debug: clean-logs
 clean-logs:
 	rm logs/*-b.txt || echo "Logs clean already."
 
+logs-to-sheet:
+	node tools/logs-to-csv.js logs > logs/logs.csv
+
 show-pd-snaps:
 	node tools/wrap-images-in-html.js debug-snapshots/pd tools/page-template.html tools/entry-template.html > debug-snapshots/pd/index.html
 	firefox debug-snapshots/pd/index.html
