@@ -115,8 +115,9 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
     logSignal("010-carrier-raw-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
   }
 
-  carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
-  infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
+  // Drop high-pass for now.
+  //carrierHighPassFilter.processSamples(carrierBlockSamples.data(), carrierBlockSamples.size());
+  //infoHighPassFilter.processSamples(infoBlockSamples.data(), infoBlockSamples.size());
   if (blockIndex == blockIndexToLog) {
     logSignal("006-info-highpass-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
     logSignal("020-carrier-highpass-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
