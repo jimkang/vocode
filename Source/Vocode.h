@@ -92,7 +92,7 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
     // TODO: Cut down on the copying.
     int outBlockSampleIndex = 0;
     for (auto it = outStart; it!= outNext; ++it) {
-      *it = outBlockSamples[outBlockSampleIndex];
+      *it += outBlockSamples[outBlockSampleIndex];
       ++outBlockSampleIndex;
     }
 
