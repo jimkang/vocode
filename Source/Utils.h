@@ -155,9 +155,9 @@ static void rSqrtSignal(const float *array, int size, float *outArray) {
       //cout << "break here";
     //}
     if (val < closeEnoughToZero) {
-      val = 0;
+      val = tinyNumber;
     }
-    val += tinyNumber;
+    //val += tinyNumber;
     const float result = reciprocalSqRt(val);
     outArray[i] = result;
   }
