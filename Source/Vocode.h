@@ -70,15 +70,15 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
   //}
   //return;
 
-  for (int blockIndex = 0; blockIndex < maxBlocks; ++blockIndex) {
+  for (int blockIndex = 0; blockIndex < maxBlocks * overlapFactor; ++blockIndex) {
     cout << "vocoding block  " << blockIndex << endl;
-
-    auto carrierNext = carrierStart + blockSize;
-    auto infoNext = infoStart + blockSize;
-    auto outNext = outStart + blockSize;
-    vector<float> carrierBlockSamples(carrierStart, carrierNext);
-    vector<float> infoBlockSamples(infoStart, infoNext);
-    vector<float> outBlockSamples(outStart, outNext);
+    const int offset = (blockIndex == 0 ? 0 : overlapOffset);
+    auto carrierNext = carrierStart + offset;
+    auto infoNext = infoStart + offset;
+    auto outNext = outStart + offset;
+    vector<float> carrierBlockSamples(carrierStart, carrierStart + blockSize);
+    vector<float> infoBlockSamples(infoStart, infoStart + blockSize);
+    vector<float> outBlockSamples(outStart, outStart + blockSize);
 
     vocodeBlock(
       carrierBlockSamples,
@@ -90,10 +90,10 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
     );
 
     // TODO: Cut down on the copying.
-    int outBlockSampleIndex = 0;
-    for (auto it = outStart; it!= outNext; ++it) {
+    auto it = outStart;
+    for (int outBlockSampleIndex = 0; outBlockSampleIndex < blockSize; ++outBlockSampleIndex) {
       *it += outBlockSamples[outBlockSampleIndex];
-      ++outBlockSampleIndex;
+      ++it;
     }
 
     carrierStart = carrierNext;

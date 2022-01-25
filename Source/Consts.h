@@ -12,7 +12,8 @@ const float maxCarrierMag = 9;
 const float smallifyFactor = 1.0;//0.00065;
 const float tinyNumber = pow(10, -20);
 
-const int overlapFactor = 0;//pow(2, fftPowerOf2 - 1);
+const int overlapFactor = 4;//pow(2, fftPowerOf2 - 1);
+const int overlapOffset = blockSize/overlapFactor;
 
 const int closeEnoughToZero = pow(10, -6);
 
