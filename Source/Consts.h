@@ -9,10 +9,10 @@ const int blockSizeInBytes = blockSize * sizeof(float);
 // These come from Miller Puckette's timbre-stamp Pure Data patch.
 // I imagine they were determined via experimentation.
 const float maxCarrierMag = 9;
-const float smallifyFactor = 0.00065;
+const float smallifyFactor = 1.0;//0.00065;
 const float tinyNumber = pow(10, -20);
 
-const int overlapSize = 0;//pow(2, fftPowerOf2 - 1);
+const int overlapFactor = 0;//pow(2, fftPowerOf2 - 1);
 
 const int closeEnoughToZero = pow(10, -6);
 

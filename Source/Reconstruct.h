@@ -20,8 +20,9 @@ static void reconstruct(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& o
 }
 
 static void reconstructChannel(const float *carrierPtr, int outLen, float *outPtr) {
+  // TODO: Update for new definition of overlap.
   // We need overlap between blocks.
-  for (int i = 0; i < outLen; i += floor(fftSize - overlapSize)) {
+  for (int i = 0; i < outLen; i += floor(fftSize - overlapFactor)) {
     int end = i + fftSize;
     if (end > outLen) {
       end = outLen;
