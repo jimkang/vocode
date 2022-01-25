@@ -9,11 +9,16 @@ const int blockSizeInBytes = blockSize * sizeof(float);
 // These come from Miller Puckette's timbre-stamp Pure Data patch.
 // I imagine they were determined via experimentation.
 const float maxCarrierMag = 9;
-const float smallifyFactor = 1.0;//0.00065;
+//const float smallifyFactor = 1.0;//0.00065;
 const float tinyNumber = pow(10, -20);
 
 const int overlapFactor = 4;//pow(2, fftPowerOf2 - 1);
 const int overlapOffset = blockSize/overlapFactor;
+// Every time the Hann window is applied, the amplitude is reduced to
+// half. (We are applying it twice.)
+// However, we are also adding the signal to itself (albeit with
+// offsets), overlapFactor number of times.
+const float hannOverlapGain = pow(0.5, 2) * overlapFactor;
 
 const int closeEnoughToZero = pow(10, -6);
 

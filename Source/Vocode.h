@@ -215,7 +215,6 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   //for (int i = 0; i < combinedAmpFactors.size(); ++i) {
     //combinedAmpFactors[i] = carrierFFTSqAddedRSqrt[i] * infoFFTSqAddedSqrt[i];
   //}
-  printRange("combinedAmpFactors", 5, 15, combinedAmpFactors.data());
   if (blockIndex == blockIndexToLog) {
     logSignal("080-amp-factor-roots-multiplied-b.txt", fftSize, combinedAmpFactors.data());
   }
@@ -223,8 +222,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
   FloatVectorOperations::multiply(
-    reducedAmpFactors.data(), combinedAmpFactors.data(), smallifyFactor, fftSize);
-  printRange("reducedAmpFactors after reduction", 5, 15, reducedAmpFactors.data());
+    reducedAmpFactors.data(), combinedAmpFactors.data(), 1.0/hannOverlapGain, fftSize);
 
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
