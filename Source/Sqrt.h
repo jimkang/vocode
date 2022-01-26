@@ -8,13 +8,7 @@ static float reciprocalSqRt(float bin) {
 static void rSqrtSignal(const float *array, int size, float *outArray) {
   for (int i = 0; i < size; ++i) {
     float val = array[i];
-    //if (i == 313) {
-      //cout << "break here";
-    //}
-    if (val < closeEnoughToZero) {
-      val = tinyNumber;
-    }
-    //val += tinyNumber;
+    val += tinyNumber;
     const float result = reciprocalSqRt(val);
     outArray[i] = result;
   }
