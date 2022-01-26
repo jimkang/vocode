@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "Consts.h"
 #include "LogSignal.h"
+#include "Sqrt.h"
 
 using namespace juce;
 using namespace std;

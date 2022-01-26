@@ -15,3 +15,12 @@ logs-to-sheet:
 show-pd-snaps:
 	node tools/wrap-images-in-html.js debug-snapshots/pd tools/page-template.html tools/entry-template.html > debug-snapshots/pd/index.html
 	firefox debug-snapshots/pd/index.html
+
+rsqrt: tools/try-rsqrt
+	./tools/try-rsqrt logs/050-carrier-rfft-added-a.txt > logs/060-carrier-rsqrt-experimental.txt
+
+tools/try-rsqrt:
+	g++ tools/try-rsqrt.c -o tools/try-rsqrt -std=c++11
+
+build-try-rsqrt:
+	g++ tools/try-rsqrt.c -o tools/try-rsqrt -std=c++11
