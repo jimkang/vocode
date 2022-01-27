@@ -11,8 +11,9 @@ void logSignal(const char *fileName, int signalLength, const float *signal) {
   string filePath = baseLogPath;
   filePath += fileName;
   ofstream out(filePath.c_str(), ios_base::app);
+  out.precision(14);
   for (int i = 0; i < signalLength; ++i) {
-    out << fixed << signal[i] << endl;
+    out << signal[i] << endl;
   }
   out.close();
 }
