@@ -53,8 +53,16 @@ static void getFFT(ComplexFFTArray& fftData) {
   //const int halfByteLength = fftData.size() * sizeof(float) / 2;
   //zeromem(fftData.data() + halfByteLength, halfByteLength);
   const int halfLength = fftData.size() / 2;
-  for (int i = 0; i < halfLength; ++i) {
-    fftData[halfLength + i] = 0;
+  for (int i = 0; i < fftData.size(); ++i) {
+    if (i > halfLength) {
+      fftData[i] = 0;
+    }
+    //else {
+      //float absValue = abs(fftData[i]);
+      //if (absValue != 0 && absValue < minimumNonZeroFFTResult) {
+        //fftData[i] = (fftData[i] < 0 ? -1.0 : 1.0) * minimumNonZeroFFTResult;
+      //}
+    //}
   }
 }
 

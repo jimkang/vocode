@@ -223,7 +223,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
   FloatVectorOperations::multiply(
-    reducedAmpFactors.data(), combinedAmpFactors.data(), 1.0/hannOverlapGain, fftSize);
+    reducedAmpFactors.data(), combinedAmpFactors.data(), 1.0/hannOverlapGain * smallifyFactor, fftSize);
 
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
