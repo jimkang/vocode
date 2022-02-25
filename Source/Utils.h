@@ -164,13 +164,14 @@ static void buildBlockWithOverlap(const float *buffer, int startIndex, int block
   const int layerOffset = floor(blockSize/overlapFactor);
   for (int blockIndex = 0; blockIndex < blockSize; ++blockIndex) {
     for (int layerIndex = 0; layerIndex < overlapFactor; ++layerIndex) {
-      const int srcOffset = layerIndex * layerOffset + blockIndex;
-      if (srcOffset >= blockSize) {
+      const int srcIndex = startIndex + blockIndex - layerIndex * layerOffset;
+      if (srcIndex < 0) {
         continue;
       }
-      blockVector[blockIndex] += buffer[srcOffset + startIndex];
+      blockVector[blockIndex] += buffer[srcIndex];
     }
   }
+
   bool allZeroes = true;
   for (int i = 0; i < blockSize; ++i) {
     if (abs(blockVector[i]) < closeEnoughToZero) {
