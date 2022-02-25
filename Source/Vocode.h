@@ -30,7 +30,6 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
     vector<float> infoSamples(infoBuffer.getReadPointer(ch), infoBuffer.getReadPointer(ch) + maxSamples);
     vector<float> outSamples(maxSamples);
 
-
     //for (int i = 0; i < outSamples.size(); ++i) {
       //outSamples[i] = carrierSamples[i];
     //}
@@ -43,6 +42,7 @@ static void vocode(AudioBuffer<float>& carrierBuffer, AudioBuffer<float>& infoBu
       //}
     //}
     float *outWritePtr = outBuffer.getWritePointer(ch);
+    //cout << "outSamples size: " << outSamples.size() << endl;
     for (int i = 0; i < outSamples.size(); ++i) {
       outWritePtr[i] = outSamples[i];
       if (outSamples[i] > 0) {
@@ -71,15 +71,16 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
   //}
   //return;
 
-  for (int blockIndex = 0; blockIndex < maxBlocks * overlapFactor; ++blockIndex) {
+  for (int blockIndex = 0; blockIndex < maxBlocks; ++blockIndex) {
     cout << "vocoding block  " << blockIndex << endl;
-    const int offset = (blockIndex == 0 ? 0 : overlapOffset);
-    auto carrierNext = carrierStart + offset;
-    auto infoNext = infoStart + offset;
-    auto outNext = outStart + offset;
-    vector<float> carrierBlockSamples(carrierStart, carrierStart + blockSize);
-    vector<float> infoBlockSamples(infoStart, infoStart + blockSize);
-    vector<float> outBlockSamples(outStart, outStart + blockSize);
+    const int sampleIndex = blockIndex * blockSize;
+
+    vector<float> carrierBlockSamples(blockSize);
+    vector<float> infoBlockSamples(blockSize);
+    vector<float> outBlockSamples(blockSize);
+
+    buildBlockWithOverlap(carrierSamples.data(), sampleIndex, blockSize, overlapFactor, carrierBlockSamples);
+    buildBlockWithOverlap(infoSamples.data(), sampleIndex, blockSize, overlapFactor, infoBlockSamples);
 
     vocodeBlock(
       carrierBlockSamples,
@@ -91,26 +92,22 @@ static void vocodeChannel(vector<float>& carrierSamples, vector<float>& infoSamp
     );
 
     // TODO: Cut down on the copying.
-    auto it = outStart;
     for (int outBlockSampleIndex = 0; outBlockSampleIndex < blockSize; ++outBlockSampleIndex) {
-      *it += outBlockSamples[outBlockSampleIndex];
-      ++it;
+      *outStart = outBlockSamples[outBlockSampleIndex];
+      ++outStart;
     }
-
-    carrierStart = carrierNext;
-    infoStart = infoNext;
-    outStart = outNext;
   }
 }
 
 static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoBlockSamples, IIRFilter& carrierHighPassFilter, IIRFilter& infoHighPassFilter, vector<float>& outBlockSamples, int blockIndex) {
 
-  //auto carrierSample = carrierBlockSamples.begin();
+  auto carrierSample = carrierBlockSamples.begin();
   //auto outSample = outBlockSamples.begin();
   //for (int i = 0; i < outBlockSamples.size(); ++i) {
     //outBlockSamples[i] = carrierSample[i];
   //}
   //return;
+
   if (blockIndex == blockIndexToLog) {
     logSignal("005-info-raw-b.txt", infoBlockSamples.size(), infoBlockSamples.data());
     logSignal("010-carrier-raw-b.txt", carrierBlockSamples.size(), carrierBlockSamples.data());
@@ -223,7 +220,11 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   // Turn down the combined amps.
   FFTArray reducedAmpFactors;
   FloatVectorOperations::multiply(
-    reducedAmpFactors.data(), combinedAmpFactors.data(), 1.0/hannOverlapGain * smallifyFactor, fftSize);
+    reducedAmpFactors.data(),
+    combinedAmpFactors.data(),
+    //1.0/hannOverlapGain * smallifyFactor,
+    1.0,
+    fftSize);
 
   FFTArray carrierRealWithReducedAmpFactors;
   FloatVectorOperations::multiply(
