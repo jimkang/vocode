@@ -161,6 +161,8 @@ static void squareSignal(float *array, int size) {
 
 // Assumes blockVector is already zeroed.
 static void buildBlockWithOverlap(const float *buffer, int startIndex, int blockSize, int overlapFactor, vector<float>& blockVector) {
+  bool clipped = false;
+
   const int layerOffset = floor(blockSize/overlapFactor);
   for (int blockIndex = 0; blockIndex < blockSize; ++blockIndex) {
     for (int layerIndex = 0; layerIndex < overlapFactor; ++layerIndex) {
@@ -168,7 +170,10 @@ static void buildBlockWithOverlap(const float *buffer, int startIndex, int block
       if (srcIndex < 0) {
         continue;
       }
-      blockVector[blockIndex] += buffer[srcIndex];
+      blockVector[blockIndex] += buffer[srcIndex];///overlapFactor;
+      if (blockVector[blockIndex] > 1.0) {
+        clipped = true;
+      }
     }
   }
 
@@ -182,5 +187,7 @@ static void buildBlockWithOverlap(const float *buffer, int startIndex, int block
   if (allZeroes) {
     cout << "startIndex " << startIndex << " yielded all zeroes." << endl;
   }
-
+  if (clipped) {
+    cout << "startIndex " << startIndex << " yielded clipping." << endl;
+  }
 }

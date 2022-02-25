@@ -222,8 +222,7 @@ static void vocodeBlock(vector<float>& carrierBlockSamples, vector<float>& infoB
   FloatVectorOperations::multiply(
     reducedAmpFactors.data(),
     combinedAmpFactors.data(),
-    //1.0/hannOverlapGain * smallifyFactor,
-    1.0,
+    1.0/hannOverlapGain,// * smallifyFactor,
     fftSize);
 
   FFTArray carrierRealWithReducedAmpFactors;
