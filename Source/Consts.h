@@ -26,5 +26,5 @@ const float closeEnoughToZero = pow(10, -8.5);
 const float minimumNonZeroFFTResult = 3E-05;
 
 // TODO: Make this an arg.
-const char *baseLogPath = "../../../logs/";
+const char *baseLogPath = "../logs/";
 const int blockIndexToLog = 68;
