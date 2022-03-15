@@ -1,0 +1,11 @@
+# ninja log v5
+3	2380	1647378486553803002	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_data_structures.cpp.o	1e1aa0e99502fac
+0	3086	1647378487257810441	CMakeFiles/vocode.dir/Source/Main.cpp.o	83b119e810eed508
+4	4111	1647378488281821260	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_events.cpp.o	87971e2b4b5f6ff1
+1	5904	1647378490073840192	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_audio_basics.cpp.o	20081dd81ea014de
+3	7285	1647378491453854770	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_dsp.cpp.o	8963b443208663e0
+1	7593	1647378491761858024	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_audio_formats.cpp.o	44ce907137c283d
+2	10389	1647378494549887470	CMakeFiles/vocode.dir/JuceLibraryCode/include_juce_core.cpp.o	551d39226fe939f6
+10390	11204	1647378495373896172	vocode	6a07e6c6b92ffe4d
+4	1963	1647378918990322339	CMakeFiles/vocode.dir/Source/Main.cpp.o	83b119e810eed508
+1964	2732	1647378919758330296	vocode	6a07e6c6b92ffe4d

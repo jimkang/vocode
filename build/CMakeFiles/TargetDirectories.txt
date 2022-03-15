@@ -1,0 +1,3 @@
+/home/jimkang/gcw/vocode/build/CMakeFiles/rebuild_cache.dir
+/home/jimkang/gcw/vocode/build/CMakeFiles/edit_cache.dir
+/home/jimkang/gcw/vocode/build/CMakeFiles/vocode.dir
