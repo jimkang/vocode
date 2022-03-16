@@ -13,7 +13,7 @@ const float smallifyFactor = 0.00065;
 const float tinyNumber = pow(10, -20);
 
 const int overlapFactor = 4;
-const int overlapOffset = blockSize/overlapFactor;
+const int overlapOffset = blockSize / overlapFactor;
 // Every time the Hann window is applied, the amplitude is reduced to
 // half. (We are applying it twice.)
 // However, we are also adding the signal to itself (albeit with
