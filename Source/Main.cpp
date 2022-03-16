@@ -10,16 +10,26 @@
 #include "Vocode.h"
 #include "Reconstruct.h"
 #include "WriteAudio.h"
+#include "RunStep.h"
+
+static const char *const usageMsg = "Usage: vocode carrier.wav info.wav result.wav OR vocode --step stepname in.txt out.txt";
 
 //==============================================================================
 int main(int argc, char *argv[]) {
     if (argc < 4) {
-        std::cerr << "Usage: vocode carrier.wav info.wav result.wav OR vocode --step stepname in.txt out.txt"
-                  << std::endl;
+        std::cerr << usageMsg << std::endl;
         return 1;
     }
 
-    if (argv[1] == "--step") {
+    const char *stepName;
+    const char *inTextPath;
+    const char *outTextPath;
+    if (strcmp(argv[1], "--step") == 0) {
+        if (argc < 5) {
+            std::cerr << usageMsg << std::endl;
+            return 1;
+        }
+        return runStep(argv[2], argv[3], argv[4]);
     }
 
     juce::File carrierFile(argv[1]);
