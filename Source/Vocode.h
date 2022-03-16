@@ -4,6 +4,7 @@
 #include "Consts.h"
 #include "LogSignal.h"
 #include "Sqrt.h"
+#include "steps/HannWindowStep.h"
 
 using namespace juce;
 using namespace std;
