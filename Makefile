@@ -9,6 +9,9 @@ try: clean-logs
 debug: clean-logs
 	cd build && gdb --args vocode ../example-media/donut.wav ../example-media/talking.wav ../example-media/result.wav
 
+steps:
+	./build/vocode --step HannWindow logs/020-carrier-highpass-b.txt step-logs/030-carrier-hann-b.txt
+
 clean-logs:
 	rm logs/*-b.txt || echo "Logs clean already."
 

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "steps/HannWindowStep.h"
 
 using namespace std;
 
@@ -29,5 +30,12 @@ int runStep(const char *stepName, const char *inTextPath, const char *outTextPat
     for (int i = 0; i < values.size(); ++i) {
         cout << "value:" << values[i] << endl;
     }
+
+    if (strcmp(stepName, "HannWindow") == 0) {
+        applyHannWindow(values.data(), (int)values.size());
+    }
+
+    logSignalToPath((int)values.size(), values.data(), outTextPath);
+
     return 0;
 }

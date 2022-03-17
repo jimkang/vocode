@@ -5,6 +5,10 @@
 #ifndef VOCODE_HANNWINDOWSTEP_H
 #define VOCODE_HANNWINDOWSTEP_H
 
+#include "JuceHeader.h"
+#include <math.h>
+#include "../Consts.h"
+
 static void applyHannWindow(float *signalBlock, int size) {
     juce::dsp::WindowingFunction<float> window(size, juce::dsp::WindowingFunction<float>::hann, false);
     window.multiplyWithWindowingTable(signalBlock, size);
@@ -28,8 +32,5 @@ static void applyHannWindow(float *signalBlock, int size) {
     //cout << "maxOrig: " << maxOrig << ", maxNew: " << maxNew << endl;
 }
 
-#include "JuceHeader.h"
-#include <math.h>
-#include "../Consts.h"
 
 #endif //VOCODE_HANNWINDOWSTEP_H

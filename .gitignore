@@ -3,3 +3,4 @@ node_modules
 *.swp
 Builds/LinuxMakefile/build
 build/vocode
+build/CMakeFiles
